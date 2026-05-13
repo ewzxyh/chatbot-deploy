@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ChatCase MongoDB R2 backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=chatcase-mongo-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+backups/
+.env
+.env.*
+!.env.example
+
+qdrant_storage/
+.firecrawl/
+
+logs/
+*.log
+*.tmp
+
+node_modules/
+.DS_Store
+Thumbs.db

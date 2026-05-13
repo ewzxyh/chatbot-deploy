@@ -1,0 +1,19 @@
+[Unit]
+Description=ChatCase MongoDB backup to Cloudflare R2 with restore check
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/opt/chatcase/tiledesk
+EnvironmentFile=-/etc/chatcase/chatcase-backup.env
+ExecStart=/opt/chatcase/tiledesk/scripts/chatcase-mongo-backup-r2-daily.sh
+TimeoutStartSec=2h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target
