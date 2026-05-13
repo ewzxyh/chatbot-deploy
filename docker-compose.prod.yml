@@ -1,0 +1,71 @@
+# Production override.
+# Use with:
+# docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+services:
+  proxy:
+    ports:
+      - "${PROXY_HTTP_BIND:?Set PROXY_HTTP_BIND, for example 80 or 127.0.0.1:8081}:80"
+
+  mongo:
+    command: ["mongod", "--bind_ip_all", "--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME:?Set MONGO_INITDB_ROOT_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD:?Set MONGO_INITDB_ROOT_PASSWORD}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet -u \"$${MONGO_INITDB_ROOT_USERNAME}\" -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval \"db.adminCommand({ping:1}).ok\""
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  rabbitmq:
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "${RABBITMQ_ERLANG_COOKIE:?Set RABBITMQ_ERLANG_COOKIE}"
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS}"
+
+  server:
+    environment:
+      - "MONGODB_URI=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
+      - "MONGODB_LOGS_URI=${TILEDESK_LOGS_MONGODB_URI:?Set TILEDESK_LOGS_MONGODB_URI}"
+      - "CHAT21_JWT_SECRET=${CHAT21_JWT_SECRET:?Set CHAT21_JWT_SECRET}"
+      - "APPS_ACCESS_TOKEN_SECRET=${APPS_ACCESS_TOKEN_SECRET:?Set APPS_ACCESS_TOKEN_SECRET}"
+      - "JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"
+      - "FB_APP_SECRET=${FB_APP_SECRET:?Set FB_APP_SECRET}"
+      - "VERIFY_TOKEN=${VERIFY_TOKEN:?Set VERIFY_TOKEN}"
+      - "FILE_STORAGE_DRIVER=${FILE_STORAGE_DRIVER:?Set FILE_STORAGE_DRIVER}"
+      - "R2_BUCKET=${R2_BUCKET:?Set R2_BUCKET}"
+      - "R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:?Set R2_ACCESS_KEY_ID}"
+      - "R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:?Set R2_SECRET_ACCESS_KEY}"
+      - "R2_KEY_PREFIX=${R2_KEY_PREFIX:?Set R2_KEY_PREFIX}"
+
+  chat21httpserver:
+    environment:
+      - "MONGODB_URI=${CHAT21_MONGODB_URI:?Set CHAT21_MONGODB_URI}"
+      - "JWT_KEY=${CHAT21_JWT_SECRET:?Set CHAT21_JWT_SECRET}"
+
+  chat21server:
+    environment:
+      - "MONGODB_URI=${CHAT21_MONGODB_URI:?Set CHAT21_MONGODB_URI}"
+
+  chatbot:
+    environment:
+      - "MONGODB_URI=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
+      - "GPTKEY=${GPTKEY:?Set GPTKEY}"
+
+  backend-llm-train:
+    environment:
+      - "MONGODB_URL=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
+      - "GPTKEY=${GPTKEY:?Set GPTKEY}"
+      - "JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"
+
+  backend-llm-qa:
+    environment:
+      - "MONGODB_URL=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
+      - "GPTKEY=${GPTKEY:?Set GPTKEY}"
+      - "JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"

@@ -2,6 +2,7 @@ backups/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 qdrant_storage/
 .firecrawl/

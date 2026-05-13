@@ -29,3 +29,17 @@ Keep `.env`, backups, and local storage directories out of git.
 - Use `R2_*` for uploads and conversation attachments.
 - Prefer separate private R2 buckets for backups and uploads.
 - Revoke any R2 credentials that were shared during local testing before production.
+
+## Production Setup
+
+```bash
+cp .env.production.example .env.production
+nano .env.production
+node scripts/check-production-env.js .env.production
+docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
+
+In production, only the proxy port should be public. Internal service ports are bound to `127.0.0.1` by default.
