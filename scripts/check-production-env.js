@@ -107,6 +107,8 @@ const warnings = [
   'CASEPAY_API_KEY',
   'CASEPAY_CONNECTION_ID',
   'CASEPAY_WEBHOOK_SECRET',
+  'OPERATIONAL_ALERT_WEBHOOK_URL',
+  'OPERATIONAL_ALERT_EMAIL_TO',
 ];
 
 function looksPlaceholder(value) {
@@ -176,7 +178,22 @@ function main() {
     'OPERATIONAL_QUEUE_READY_ALERT_THRESHOLD',
     'OPERATIONAL_QUEUE_UNACKED_ALERT_THRESHOLD',
     'OPERATIONAL_STORAGE_CHECK_TTL_SECONDS',
+    'OPERATIONAL_ALERT_WEBHOOK_TIMEOUT_MS',
   ].forEach((key) => assertPositiveInteger(env, key, errors));
+
+  if (env.OPERATIONAL_ALERT_MIN_SEVERITY &&
+      !['info', 'warning', 'critical'].includes(env.OPERATIONAL_ALERT_MIN_SEVERITY)) {
+    errors.push('OPERATIONAL_ALERT_MIN_SEVERITY must be info, warning, or critical');
+  }
+
+  if (env.OPERATIONAL_ALERT_WEBHOOK_URL && !looksPlaceholder(env.OPERATIONAL_ALERT_WEBHOOK_URL) &&
+      !env.OPERATIONAL_ALERT_WEBHOOK_URL.startsWith('https://')) {
+    errors.push('OPERATIONAL_ALERT_WEBHOOK_URL must use https:// in production');
+  }
+
+  if (env.OPERATIONAL_ALERT_EMAIL_ENABLED === 'true' && env.EMAIL_ENABLED !== 'true') {
+    errors.push('OPERATIONAL_ALERT_EMAIL_ENABLED=true requires EMAIL_ENABLED=true');
+  }
 
   [
     'MONGO_TILEDESK_PASSWORD',

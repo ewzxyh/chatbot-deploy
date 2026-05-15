@@ -109,3 +109,17 @@ OPERATIONAL_MONITOR_START_DELAY_SECONDS=60
 ```
 
 Set `OPERATIONAL_MONITOR_ENABLED=false` only for maintenance or debugging.
+
+## Operational Alerts
+
+When the monitor opens, reopens, or records a still-open critical `operational_alert`, the server can notify an external webhook and/or the admin e-mail channel.
+
+```bash
+OPERATIONAL_ALERT_MIN_SEVERITY=critical
+OPERATIONAL_ALERT_WEBHOOK_URL=https://hooks.example.com/chatcase
+OPERATIONAL_ALERT_WEBHOOK_EVENTS=alert.opened,alert.reopened,alert.still_open
+OPERATIONAL_ALERT_EMAIL_ENABLED=false
+OPERATIONAL_ALERT_EMAIL_TO=redacted@example.invalid
+```
+
+Keep `OPERATIONAL_ALERT_MIN_SEVERITY=critical` at first. Use `OPERATIONAL_ALERT_NOTIFY_RESOLVED=true` only if you also want a notification when a critical alert is resolved.
