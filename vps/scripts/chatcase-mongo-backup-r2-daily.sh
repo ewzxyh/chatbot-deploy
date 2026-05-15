@@ -146,8 +146,12 @@ for raw_db in "${databases[@]}"; do
   local_archive="${BACKUP_SET_DIR}/${archive}"
 
   echo "Backing up database '$db'..."
-  docker compose exec -T "$MONGO_SERVICE" \
-    mongodump --db "$db" --archive="$container_archive" --gzip
+  dump_args=(mongodump)
+  if [[ -n "${MONGO_BACKUP_URI:-}" ]]; then
+    dump_args+=(--uri "$MONGO_BACKUP_URI")
+  fi
+  dump_args+=(--db "$db" --archive="$container_archive" --gzip)
+  docker compose exec -T "$MONGO_SERVICE" "${dump_args[@]}"
   docker cp "${container_id}:${container_archive}" "$local_archive"
   docker compose exec -T "$MONGO_SERVICE" rm -f "$container_archive"
 
@@ -191,13 +195,18 @@ if [[ "$SKIP_RESTORE_CHECK" != "true" ]]; then
     container_archive="/tmp/chatcase-restore-${safe_target}.archive.gz"
 
     docker cp "${downloaded_set}/${archive}" "${container_id}:${container_archive}"
-    docker compose exec -T "$MONGO_SERVICE" \
-      mongorestore \
-      --archive="$container_archive" \
-      --gzip \
-      "--nsFrom=${db}.*" \
-      "--nsTo=${target_db}.*" \
+    restore_args=(mongorestore)
+    if [[ -n "${MONGO_BACKUP_URI:-}" ]]; then
+      restore_args+=(--uri "$MONGO_BACKUP_URI")
+    fi
+    restore_args+=(
+      --archive="$container_archive"
+      --gzip
+      "--nsFrom=${db}.*"
+      "--nsTo=${target_db}.*"
       --drop
+    )
+    docker compose exec -T "$MONGO_SERVICE" "${restore_args[@]}"
     docker compose exec -T "$MONGO_SERVICE" rm -f "$container_archive"
   done
 
@@ -223,8 +232,12 @@ for (const [dbName, collections] of Object.entries(checks)) {
 }
 if (failed) quit(1);
 '
-  docker compose exec -T -e "RESTORE_SUFFIX=${MONGO_RESTORE_SUFFIX}" "$MONGO_SERVICE" \
-    mongosh --quiet --eval "$compare_js"
+  mongosh_args=(mongosh)
+  if [[ -n "${MONGO_BACKUP_URI:-}" ]]; then
+    mongosh_args+=("$MONGO_BACKUP_URI")
+  fi
+  mongosh_args+=(--quiet --eval "$compare_js")
+  docker compose exec -T -e "RESTORE_SUFFIX=${MONGO_RESTORE_SUFFIX}" "$MONGO_SERVICE" "${mongosh_args[@]}"
 else
   echo "Restore check skipped by SKIP_RESTORE_CHECK=true."
 fi

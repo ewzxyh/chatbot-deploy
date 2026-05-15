@@ -3,6 +3,7 @@ param(
   [string]$BackupDir = $(if ($env:MONGO_BACKUP_DIR) { $env:MONGO_BACKUP_DIR } else { (Join-Path $PSScriptRoot "..\backups\mongo") }),
   [string]$BackupSet,
   [string]$RestoreSuffix = $(if ($env:MONGO_RESTORE_SUFFIX) { $env:MONGO_RESTORE_SUFFIX } else { "restore-test" }),
+  [string]$MongoBackupUri = $env:MONGO_BACKUP_URI,
   [switch]$NoDrop
 )
 
@@ -68,7 +69,12 @@ foreach ($db in $manifest.databases) {
 
   $restoreArgs = @(
     "exec", $MongoContainer,
-    "mongorestore",
+    "mongorestore"
+  )
+  if ($MongoBackupUri) {
+    $restoreArgs += @("--uri", $MongoBackupUri)
+  }
+  $restoreArgs += @(
     "--archive=$containerArchive",
     "--gzip",
     "--nsFrom=$sourceDb.*",
@@ -82,7 +88,12 @@ foreach ($db in $manifest.databases) {
   Invoke-Docker @("exec", $MongoContainer, "rm", "-f", $containerArchive)
 
   $statsEval = "const dbName='$targetDb'; const d=db.getSiblingDB(dbName); printjson({ db: dbName, collections: d.getCollectionNames().length, dataSize: d.stats().dataSize });"
-  Invoke-Docker @("exec", $MongoContainer, "mongosh", "--quiet", "--eval", $statsEval)
+  $statsArgs = @("exec", $MongoContainer, "mongosh")
+  if ($MongoBackupUri) {
+    $statsArgs += $MongoBackupUri
+  }
+  $statsArgs += @("--quiet", "--eval", $statsEval)
+  Invoke-Docker $statsArgs
 }
 
 Write-Host ""

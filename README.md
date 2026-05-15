@@ -25,6 +25,7 @@ Keep `.env`, backups, and local storage directories out of git.
 ## Production Notes
 
 - Use fresh production secrets on the VPS.
+- Mongo root credentials are only for initialization/admin/backup. Application services should use the dedicated `MONGO_TILEDESK_*`, `MONGO_LOGS_*`, and `MONGO_CHAT21_*` users.
 - Use `MONGO_BACKUP_R2_*` for Mongo backups.
 - Use `R2_*` for uploads and conversation attachments.
 - Prefer separate private R2 buckets for backups and uploads.
@@ -45,6 +46,22 @@ docker compose --env-file .env.production -f docker-compose.yml -f docker-compos
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
 
 In production, only the proxy port should be public. Internal service ports are bound to `127.0.0.1` by default.
+
+## MongoDB
+
+Production MongoDB runs with `--auth`. On a fresh volume, `mongo-init/01-create-app-users.js` creates three read/write application users:
+
+- `MONGO_TILEDESK_USERNAME` for the `tiledesk` database.
+- `MONGO_LOGS_USERNAME` for the `tiledesk-logs` database.
+- `MONGO_CHAT21_USERNAME` for the `chat21` database.
+
+Use URL-safe passwords for these users because they are embedded in `TILEDESK_MONGODB_URI`, `TILEDESK_LOGS_MONGODB_URI`, and `CHAT21_MONGODB_URI`.
+
+Backups and restore-checks need admin access. Set `MONGO_BACKUP_URI` in `/etc/chatcase/chatcase-backup.env`, usually:
+
+```bash
+MONGO_BACKUP_URI=mongodb://chatcase_root:<root_password_url_encoded>@localhost:27017/?authSource=admin
+```
 
 ## RabbitMQ
 

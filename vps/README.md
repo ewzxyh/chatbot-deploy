@@ -33,6 +33,12 @@ R2 buckets:
 - Prefer separate private buckets, for example `chatcase-backups` and `chatcase-uploads`.
 - If you intentionally use one bucket, keep separate prefixes such as `MONGO_BACKUP_R2_PREFIX=backups/mongo` and `R2_KEY_PREFIX=uploads/prod`.
 
+Mongo auth:
+
+- Set `MONGO_BACKUP_URI` in `/etc/chatcase/chatcase-backup.env`.
+- This URI should use the root/admin Mongo user because restore-check creates `*-restore-test` databases.
+- If the root password has reserved URL characters, URL-encode it in `MONGO_BACKUP_URI`.
+
 Install on VPS:
 
 ```bash

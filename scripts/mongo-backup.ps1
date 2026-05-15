@@ -1,7 +1,8 @@
 param(
   [string]$MongoContainer = $(if ($env:MONGO_CONTAINER) { $env:MONGO_CONTAINER } else { "mongo" }),
   [string]$BackupDir = $(if ($env:MONGO_BACKUP_DIR) { $env:MONGO_BACKUP_DIR } else { (Join-Path $PSScriptRoot "..\backups\mongo") }),
-  [string]$Databases = $(if ($env:MONGO_DATABASES) { $env:MONGO_DATABASES } else { "tiledesk,chat21,tiledesk-logs" })
+  [string]$Databases = $(if ($env:MONGO_DATABASES) { $env:MONGO_DATABASES } else { "tiledesk,chat21,tiledesk-logs" }),
+  [string]$MongoBackupUri = $env:MONGO_BACKUP_URI
 )
 
 $ErrorActionPreference = "Stop"
@@ -45,7 +46,13 @@ foreach ($db in $databaseList) {
   $hostArchive = Join-Path $backupSetDir $archiveName
 
   Write-Host "Backing up database '$db'..."
-  Invoke-Docker @("exec", $MongoContainer, "mongodump", "--db", $db, "--archive=$containerArchive", "--gzip")
+  $dumpArgs = @("exec", $MongoContainer, "mongodump")
+  if ($MongoBackupUri) {
+    $dumpArgs += @("--uri", $MongoBackupUri)
+  }
+  $dumpArgs += @("--db", $db, "--archive=$containerArchive", "--gzip")
+
+  Invoke-Docker $dumpArgs
   Invoke-Docker @("cp", "${MongoContainer}:$containerArchive", $hostArchive)
   Invoke-Docker @("exec", $MongoContainer, "rm", "-f", $containerArchive)
 

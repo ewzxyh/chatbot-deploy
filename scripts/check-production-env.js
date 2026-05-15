@@ -33,6 +33,12 @@ const required = [
   'FILE_STORAGE_DRIVER',
   'MONGO_INITDB_ROOT_USERNAME',
   'MONGO_INITDB_ROOT_PASSWORD',
+  'MONGO_TILEDESK_USERNAME',
+  'MONGO_TILEDESK_PASSWORD',
+  'MONGO_LOGS_USERNAME',
+  'MONGO_LOGS_PASSWORD',
+  'MONGO_CHAT21_USERNAME',
+  'MONGO_CHAT21_PASSWORD',
   'TILEDESK_MONGODB_URI',
   'TILEDESK_LOGS_MONGODB_URI',
   'CHAT21_MONGODB_URI',
@@ -72,6 +78,9 @@ const weakValues = new Set([
   '',
   'CHANGE_ME',
   'CHANGE_ME_STRONG_PASSWORD',
+  'CHANGE_ME_MONGO_TILEDESK_PASSWORD',
+  'CHANGE_ME_MONGO_LOGS_PASSWORD',
+  'CHANGE_ME_MONGO_CHAT21_PASSWORD',
   'CHANGE_ME_REDIS_PASSWORD',
   'CHANGE_ME_LONG_RANDOM_COOKIE',
   'CHANGE_ME_LONG_RANDOM_SECRET',
@@ -98,7 +107,34 @@ const warnings = [
 ];
 
 function looksPlaceholder(value) {
-  return weakValues.has(value) || /^<.+>$/.test(value || '') || /^CHANGE_ME/.test(value || '');
+  return weakValues.has(value) ||
+    /^<.+>$/.test(value || '') ||
+    /<[^>]+>/.test(value || '') ||
+    /CHANGE_ME/.test(value || '');
+}
+
+function assertUrlSafeSecret(env, key, errors) {
+  if (env[key] && !looksPlaceholder(env[key]) && !/^[A-Za-z0-9._~-]{24,}$/.test(env[key])) {
+    errors.push(`${key} must be at least 24 URL-safe characters: A-Z a-z 0-9 . _ ~ -`);
+  }
+}
+
+function validateMongoUri(env, errors, uriKey, dbName, userKey, authSource) {
+  const uri = env[uriKey];
+  if (!uri || looksPlaceholder(uri)) return;
+
+  if (env.MONGO_INITDB_ROOT_USERNAME && uri.includes(env.MONGO_INITDB_ROOT_USERNAME)) {
+    errors.push(`${uriKey} must use a dedicated application user, not MONGO_INITDB_ROOT_USERNAME`);
+  }
+  if (env[userKey] && !looksPlaceholder(env[userKey]) && !uri.includes(`${env[userKey]}:`)) {
+    errors.push(`${uriKey} must use ${userKey}`);
+  }
+  if (!uri.includes(`@mongo:27017/${dbName}`)) {
+    errors.push(`${uriKey} must target mongo:27017/${dbName}`);
+  }
+  if (!uri.includes(`authSource=${authSource}`)) {
+    errors.push(`${uriKey} must use authSource=${authSource}`);
+  }
 }
 
 function main() {
@@ -122,9 +158,12 @@ function main() {
     errors.push('FILE_STORAGE_DRIVER should be r2 in production');
   }
 
-  if (env.REDIS_PASSWORD && !looksPlaceholder(env.REDIS_PASSWORD) && !/^[A-Za-z0-9._~-]{24,}$/.test(env.REDIS_PASSWORD)) {
-    errors.push('REDIS_PASSWORD must be at least 24 URL-safe characters: A-Z a-z 0-9 . _ ~ -');
-  }
+  [
+    'MONGO_TILEDESK_PASSWORD',
+    'MONGO_LOGS_PASSWORD',
+    'MONGO_CHAT21_PASSWORD',
+    'REDIS_PASSWORD',
+  ].forEach((key) => assertUrlSafeSecret(env, key, errors));
 
   if (env.REDIS_URL && !looksPlaceholder(env.REDIS_URL)) {
     if (!env.REDIS_URL.startsWith('redis://:')) {
@@ -137,6 +176,10 @@ function main() {
       errors.push('REDIS_URL must use the same value as REDIS_PASSWORD');
     }
   }
+
+  validateMongoUri(env, errors, 'TILEDESK_MONGODB_URI', 'tiledesk', 'MONGO_TILEDESK_USERNAME', 'tiledesk');
+  validateMongoUri(env, errors, 'TILEDESK_LOGS_MONGODB_URI', 'tiledesk-logs', 'MONGO_LOGS_USERNAME', 'tiledesk-logs');
+  validateMongoUri(env, errors, 'CHAT21_MONGODB_URI', 'chat21', 'MONGO_CHAT21_USERNAME', 'chat21');
 
   for (const key of warnings) {
     if (!(key in env) || looksPlaceholder(env[key])) {

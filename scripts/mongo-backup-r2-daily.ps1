@@ -94,7 +94,13 @@ for (const [dbName, collections] of Object.entries(checks)) {
 if (failed) quit(1);
 '@.Replace("__RESTORE_SUFFIX__", $safeSuffix)
 
-  Invoke-Checked -FilePath "docker" -Arguments @("compose", "exec", "-T", $MongoContainerName, "mongosh", "--quiet", "--eval", $js)
+  $mongoShellArgs = @("compose", "exec", "-T", $MongoContainerName, "mongosh")
+  if ($env:MONGO_BACKUP_URI) {
+    $mongoShellArgs += $env:MONGO_BACKUP_URI
+  }
+  $mongoShellArgs += @("--quiet", "--eval", $js)
+
+  Invoke-Checked -FilePath "docker" -Arguments $mongoShellArgs
 }
 
 function Send-BackupAlert {
