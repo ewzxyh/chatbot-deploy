@@ -409,30 +409,25 @@ services:
   rabbitmq:
     image: chat21/chat21-rabbitmq
     container_name: rabbitmq
+    volumes:
+      - ./rabbitmq-configure-and-start.sh:/usr/local/bin/chatcase-rabbitmq-configure-and-start.sh:ro
     environment:
       RABBITMQ_ERLANG_COOKIE: "${RABBITMQ_ERLANG_COOKIE:-chatcase-dev-cookie}"
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:-admin}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:-change-me}"
+      RABBITMQ_JWT_SECRET: "${CHAT21_JWT_SECRET:-tokenKey}"
+    command: ["/bin/sh", "/usr/local/bin/chatcase-rabbitmq-configure-and-start.sh"]
     ports:
       - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
       - "127.0.0.1:1883:1883"
       - "127.0.0.1:15675:15675"
     healthcheck:
-      test:
-        - CMD
-        - nc
-        - "-z"
-        - localhost
-        - "5672"
-      interval: 5s
-      timeout: 15s
-      retries: 1
-    # healthcheck:
-    #   test: ["CMD", "rabbitmq-diagnostics", "ping"]
-    #   interval: 10s
-    #   timeout: 10s
-    #   retries: 5
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
     # healthcheck:
     #     test: [ "CMD", "nc", "-z", "localhost", "5672" ]
     #     interval: 5s

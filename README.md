@@ -35,6 +35,8 @@ Keep `.env`, backups, and local storage directories out of git.
 ```bash
 cp .env.production.example .env.production
 nano .env.production
+set -a; . ./.env.production; set +a
+node scripts/generate-rabbitmq-jwt.js "$CHAT21_JWT_SECRET" rabbitmq
 node scripts/check-production-env.js .env.production
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -43,3 +45,17 @@ docker compose --env-file .env.production -f docker-compose.yml -f docker-compos
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
 
 In production, only the proxy port should be public. Internal service ports are bound to `127.0.0.1` by default.
+
+## RabbitMQ
+
+The `chat21/chat21-rabbitmq` image authenticates AMQP clients with JWT/OAuth tokens. `RABBITMQ_DEFAULT_USER` and `RABBITMQ_DEFAULT_PASS` are still useful for the management user, but application containers must use token URLs:
+
+- `AMQP_MANAGER_URL` for Tiledesk server, chatbot, and LLM workers.
+- `RABBITMQ_URI` for Chat21 server.
+- `RABBITMQ_ADMIN_URI` for Chat21 HTTP/push services.
+
+Generate them with the same `CHAT21_JWT_SECRET` used by the app:
+
+```bash
+node scripts/generate-rabbitmq-jwt.js "$CHAT21_JWT_SECRET" rabbitmq
+```
