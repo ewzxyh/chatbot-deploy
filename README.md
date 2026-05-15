@@ -98,6 +98,20 @@ The Management API URL should stay internal:
 RABBITMQ_MANAGEMENT_URL=http://rabbitmq:15672/api
 ```
 
+Keep the monitored queue list aligned with the queues that really exist in the running RabbitMQ instance. The local ChatCase compose currently exposes these operational queues with consumers:
+
+```bash
+OPERATIONAL_RABBITMQ_QUEUES=jobsmanager,webhooks,messages,logs_queue,conversation-tags_queue,persist,tiledesk-trainer
+```
+
+Before going live on the VPS, confirm the final list with:
+
+```bash
+docker exec rabbitmq rabbitmqctl list_queues name consumers messages_ready messages_unacknowledged
+```
+
+Remove a queue from `OPERATIONAL_RABBITMQ_QUEUES` only if its service is intentionally disabled in that environment. Leaving a non-existent queue in the list creates a false critical alert; omitting an active critical queue leaves it unmonitored.
+
 ## Operational Monitor
 
 The Tiledesk server runs the internal operational monitor in the background. It periodically refreshes health checks and syncs `operational_alerts`, so alerts do not depend on someone opening the admin panel.

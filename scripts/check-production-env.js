@@ -50,6 +50,7 @@ const required = [
   'RABBITMQ_MANAGEMENT_URL',
   'RABBITMQ_MANAGEMENT_USERNAME',
   'RABBITMQ_MANAGEMENT_PASSWORD',
+  'OPERATIONAL_RABBITMQ_QUEUES',
   'AMQP_MANAGER_URL',
   'RABBITMQ_URI',
   'RABBITMQ_ADMIN_URI',
@@ -111,6 +112,16 @@ const warnings = [
   'OPERATIONAL_ALERT_EMAIL_TO',
 ];
 
+const recommendedRabbitQueues = [
+  'jobsmanager',
+  'webhooks',
+  'messages',
+  'logs_queue',
+  'conversation-tags_queue',
+  'persist',
+  'tiledesk-trainer',
+];
+
 function looksPlaceholder(value) {
   return weakValues.has(value) ||
     /^<.+>$/.test(value || '') ||
@@ -131,6 +142,13 @@ function assertPositiveInteger(env, key, errors) {
       errors.push(`${key} must be a positive integer`);
     }
   }
+}
+
+function parseQueueList(raw) {
+  return String(raw || '')
+    .split(',')
+    .map((queue) => queue.trim())
+    .filter(Boolean);
 }
 
 function validateMongoUri(env, errors, uriKey, dbName, userKey, authSource) {
@@ -230,6 +248,23 @@ function main() {
       !looksPlaceholder(env.RABBITMQ_MANAGEMENT_PASSWORD) && !looksPlaceholder(env.RABBITMQ_DEFAULT_PASS) &&
       env.RABBITMQ_MANAGEMENT_PASSWORD !== env.RABBITMQ_DEFAULT_PASS) {
     errors.push('RABBITMQ_MANAGEMENT_PASSWORD must match RABBITMQ_DEFAULT_PASS unless a separate RabbitMQ management user is created');
+  }
+
+  if (env.OPERATIONAL_RABBITMQ_QUEUES && !looksPlaceholder(env.OPERATIONAL_RABBITMQ_QUEUES)) {
+    if (env.OPERATIONAL_RABBITMQ_QUEUES.split(',').some((queue) => queue.trim() === '')) {
+      errors.push('OPERATIONAL_RABBITMQ_QUEUES must not contain empty queue names');
+    }
+
+    const queues = parseQueueList(env.OPERATIONAL_RABBITMQ_QUEUES);
+    const duplicates = queues.filter((queue, index) => queues.indexOf(queue) !== index);
+    if (duplicates.length > 0) {
+      errors.push(`OPERATIONAL_RABBITMQ_QUEUES contains duplicate names: ${[...new Set(duplicates)].join(', ')}`);
+    }
+
+    const missingRecommended = recommendedRabbitQueues.filter((queue) => !queues.includes(queue));
+    if (missingRecommended.length > 0) {
+      warn.push(`OPERATIONAL_RABBITMQ_QUEUES is missing currently recommended queues: ${missingRecommended.join(', ')}`);
+    }
   }
 
   validateMongoUri(env, errors, 'TILEDESK_MONGODB_URI', 'tiledesk', 'MONGO_TILEDESK_USERNAME', 'tiledesk');
