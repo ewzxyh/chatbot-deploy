@@ -84,9 +84,16 @@ The `chat21/chat21-rabbitmq` image authenticates AMQP clients with JWT/OAuth tok
 - `AMQP_MANAGER_URL` for Tiledesk server, chatbot, and LLM workers.
 - `RABBITMQ_URI` for Chat21 server.
 - `RABBITMQ_ADMIN_URI` for Chat21 HTTP/push services.
+- `RABBITMQ_MANAGEMENT_URL`, `RABBITMQ_MANAGEMENT_USERNAME`, and `RABBITMQ_MANAGEMENT_PASSWORD` let the Tiledesk server read queue metrics from the internal Management API.
 
 Generate them with the same `CHAT21_JWT_SECRET` used by the app:
 
 ```bash
 node scripts/generate-rabbitmq-jwt.js "$CHAT21_JWT_SECRET" rabbitmq
+```
+
+The Management API URL should stay internal:
+
+```bash
+RABBITMQ_MANAGEMENT_URL=http://rabbitmq:15672/api
 ```

@@ -47,6 +47,9 @@ const required = [
   'RABBITMQ_DEFAULT_USER',
   'RABBITMQ_DEFAULT_PASS',
   'RABBITMQ_ERLANG_COOKIE',
+  'RABBITMQ_MANAGEMENT_URL',
+  'RABBITMQ_MANAGEMENT_USERNAME',
+  'RABBITMQ_MANAGEMENT_PASSWORD',
   'AMQP_MANAGER_URL',
   'RABBITMQ_URI',
   'RABBITMQ_ADMIN_URI',
@@ -175,6 +178,24 @@ function main() {
     if (env.REDIS_PASSWORD && !looksPlaceholder(env.REDIS_PASSWORD) && !env.REDIS_URL.includes(`:${env.REDIS_PASSWORD}@`)) {
       errors.push('REDIS_URL must use the same value as REDIS_PASSWORD');
     }
+  }
+
+  if (env.RABBITMQ_MANAGEMENT_URL && !looksPlaceholder(env.RABBITMQ_MANAGEMENT_URL)) {
+    if (env.RABBITMQ_MANAGEMENT_URL !== 'http://rabbitmq:15672/api') {
+      errors.push('RABBITMQ_MANAGEMENT_URL must target the internal RabbitMQ management API: http://rabbitmq:15672/api');
+    }
+  }
+
+  if (env.RABBITMQ_MANAGEMENT_USERNAME && env.RABBITMQ_DEFAULT_USER &&
+      !looksPlaceholder(env.RABBITMQ_MANAGEMENT_USERNAME) && !looksPlaceholder(env.RABBITMQ_DEFAULT_USER) &&
+      env.RABBITMQ_MANAGEMENT_USERNAME !== env.RABBITMQ_DEFAULT_USER) {
+    errors.push('RABBITMQ_MANAGEMENT_USERNAME must match RABBITMQ_DEFAULT_USER unless a separate RabbitMQ management user is created');
+  }
+
+  if (env.RABBITMQ_MANAGEMENT_PASSWORD && env.RABBITMQ_DEFAULT_PASS &&
+      !looksPlaceholder(env.RABBITMQ_MANAGEMENT_PASSWORD) && !looksPlaceholder(env.RABBITMQ_DEFAULT_PASS) &&
+      env.RABBITMQ_MANAGEMENT_PASSWORD !== env.RABBITMQ_DEFAULT_PASS) {
+    errors.push('RABBITMQ_MANAGEMENT_PASSWORD must match RABBITMQ_DEFAULT_PASS unless a separate RabbitMQ management user is created');
   }
 
   validateMongoUri(env, errors, 'TILEDESK_MONGODB_URI', 'tiledesk', 'MONGO_TILEDESK_USERNAME', 'tiledesk');

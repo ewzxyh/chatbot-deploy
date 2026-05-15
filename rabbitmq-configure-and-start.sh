@@ -13,7 +13,7 @@ ADVANCED_CONFIG_FILE="/tmp/chatcase-rabbitmq-advanced.config"
 cat > "$ADVANCED_CONFIG_FILE" <<EOF
 [
     {rabbit, [
-        {auth_backends, [rabbit_auth_backend_oauth2]}
+        {auth_backends, [rabbit_auth_backend_oauth2, rabbit_auth_backend_internal]}
     ]},
 
     {rabbitmq_auth_backend_oauth2, [
@@ -35,4 +35,41 @@ cat > "$ADVANCED_CONFIG_FILE" <<EOF
 EOF
 
 export RABBITMQ_ADVANCED_CONFIG_FILE="$ADVANCED_CONFIG_FILE"
-exec rabbitmq-server
+rm -f /tmp/chatcase-rabbitmq-ready
+
+rabbitmq-server &
+RABBITMQ_PID="$!"
+
+stop_rabbitmq() {
+  rabbitmqctl stop >/dev/null 2>&1 || true
+  wait "$RABBITMQ_PID" >/dev/null 2>&1 || true
+}
+trap stop_rabbitmq TERM INT
+
+for i in $(seq 1 60); do
+  if rabbitmqctl status >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+if ! rabbitmqctl status >/dev/null 2>&1; then
+  echo "RabbitMQ did not become ready in time" >&2
+  wait "$RABBITMQ_PID"
+  exit 1
+fi
+
+MANAGEMENT_USER="${RABBITMQ_DEFAULT_USER:-admin}"
+MANAGEMENT_PASS="${RABBITMQ_DEFAULT_PASS:-change-me}"
+
+if rabbitmqctl list_users | awk 'NR > 1 { print $1 }' | grep -qx "$MANAGEMENT_USER"; then
+  rabbitmqctl change_password "$MANAGEMENT_USER" "$MANAGEMENT_PASS"
+else
+  rabbitmqctl add_user "$MANAGEMENT_USER" "$MANAGEMENT_PASS"
+fi
+
+rabbitmqctl set_user_tags "$MANAGEMENT_USER" administrator
+rabbitmqctl set_permissions -p / "$MANAGEMENT_USER" ".*" ".*" ".*"
+touch /tmp/chatcase-rabbitmq-ready
+
+wait "$RABBITMQ_PID"

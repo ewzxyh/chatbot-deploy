@@ -215,7 +215,11 @@ services:
       - CACHE_REDIS_PORT=6379
       - CACHE_REDIS_PASSWORD
       - OPERATIONAL_RABBITMQ_QUEUES=jobsmanager,webhooks,messages,logs_queue,conversation-tags_queue
-      - OPERATIONAL_QUEUE_READY_ALERT_THRESHOLD=100
+      - "OPERATIONAL_QUEUE_READY_ALERT_THRESHOLD=${OPERATIONAL_QUEUE_READY_ALERT_THRESHOLD:-100}"
+      - "OPERATIONAL_QUEUE_UNACKED_ALERT_THRESHOLD=${OPERATIONAL_QUEUE_UNACKED_ALERT_THRESHOLD:-100}"
+      - "RABBITMQ_MANAGEMENT_URL=${RABBITMQ_MANAGEMENT_URL:-http://rabbitmq:15672/api}"
+      - "RABBITMQ_MANAGEMENT_USERNAME=${RABBITMQ_MANAGEMENT_USERNAME:-${RABBITMQ_DEFAULT_USER:-admin}}"
+      - "RABBITMQ_MANAGEMENT_PASSWORD=${RABBITMQ_MANAGEMENT_PASSWORD:-${RABBITMQ_DEFAULT_PASS:-change-me}}"
       - "OPERATIONAL_STORAGE_CHECK_ENABLED=${OPERATIONAL_STORAGE_CHECK_ENABLED:-true}"
       - "OPERATIONAL_STORAGE_CHECK_TTL_SECONDS=${OPERATIONAL_STORAGE_CHECK_TTL_SECONDS:-300}"
       - "APPS_ACCESS_TOKEN_SECRET=${APPS_ACCESS_TOKEN_SECRET:-nodeauthsecret}"
@@ -433,7 +437,7 @@ services:
       - "127.0.0.1:1883:1883"
       - "127.0.0.1:15675:15675"
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping && test -f /tmp/chatcase-rabbitmq-ready"]
       interval: 10s
       timeout: 10s
       retries: 6
