@@ -39,6 +39,7 @@ nano .env.production
 set -a; . ./.env.production; set +a
 node scripts/generate-rabbitmq-jwt.js "$CHAT21_JWT_SECRET" rabbitmq
 node scripts/check-production-env.js .env.production
+node scripts/r2-storage-smoke.js smoke --env .env.production
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
@@ -62,6 +63,19 @@ Backups and restore-checks need admin access. Set `MONGO_BACKUP_URI` in `/etc/ch
 ```bash
 MONGO_BACKUP_URI=mongodb://chatcase_root:<root_password_url_encoded>@localhost:27017/?authSource=admin
 ```
+
+## R2 Upload Storage
+
+Production uploads and conversation attachments use `R2_*`, separate from `MONGO_BACKUP_R2_*`.
+
+Before the first production deploy, run:
+
+```bash
+node scripts/r2-storage-smoke.js check-config --env .env.production
+node scripts/r2-storage-smoke.js smoke --env .env.production
+```
+
+The smoke command writes, reads, verifies, and deletes a small object under `R2_KEY_PREFIX`. It prints bucket/key metadata only, never access keys or secrets.
 
 ## RabbitMQ
 
