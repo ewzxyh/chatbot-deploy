@@ -97,3 +97,15 @@ The Management API URL should stay internal:
 ```bash
 RABBITMQ_MANAGEMENT_URL=http://rabbitmq:15672/api
 ```
+
+## Operational Monitor
+
+The Tiledesk server runs the internal operational monitor in the background. It periodically refreshes health checks and syncs `operational_alerts`, so alerts do not depend on someone opening the admin panel.
+
+```bash
+OPERATIONAL_MONITOR_ENABLED=true
+OPERATIONAL_MONITOR_INTERVAL_SECONDS=300
+OPERATIONAL_MONITOR_START_DELAY_SECONDS=60
+```
+
+Set `OPERATIONAL_MONITOR_ENABLED=false` only for maintenance or debugging.

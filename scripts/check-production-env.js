@@ -122,6 +122,15 @@ function assertUrlSafeSecret(env, key, errors) {
   }
 }
 
+function assertPositiveInteger(env, key, errors) {
+  if (env[key] !== undefined && env[key] !== '' && !looksPlaceholder(env[key])) {
+    const parsed = Number(env[key]);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      errors.push(`${key} must be a positive integer`);
+    }
+  }
+}
+
 function validateMongoUri(env, errors, uriKey, dbName, userKey, authSource) {
   const uri = env[uriKey];
   if (!uri || looksPlaceholder(uri)) return;
@@ -160,6 +169,14 @@ function main() {
   if (env.FILE_STORAGE_DRIVER && env.FILE_STORAGE_DRIVER !== 'r2') {
     errors.push('FILE_STORAGE_DRIVER should be r2 in production');
   }
+
+  [
+    'OPERATIONAL_MONITOR_INTERVAL_SECONDS',
+    'OPERATIONAL_MONITOR_START_DELAY_SECONDS',
+    'OPERATIONAL_QUEUE_READY_ALERT_THRESHOLD',
+    'OPERATIONAL_QUEUE_UNACKED_ALERT_THRESHOLD',
+    'OPERATIONAL_STORAGE_CHECK_TTL_SECONDS',
+  ].forEach((key) => assertPositiveInteger(env, key, errors));
 
   [
     'MONGO_TILEDESK_PASSWORD',
