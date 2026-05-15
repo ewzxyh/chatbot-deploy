@@ -36,6 +36,8 @@ const required = [
   'TILEDESK_MONGODB_URI',
   'TILEDESK_LOGS_MONGODB_URI',
   'CHAT21_MONGODB_URI',
+  'REDIS_PASSWORD',
+  'REDIS_URL',
   'RABBITMQ_DEFAULT_USER',
   'RABBITMQ_DEFAULT_PASS',
   'RABBITMQ_ERLANG_COOKIE',
@@ -70,6 +72,7 @@ const weakValues = new Set([
   '',
   'CHANGE_ME',
   'CHANGE_ME_STRONG_PASSWORD',
+  'CHANGE_ME_REDIS_PASSWORD',
   'CHANGE_ME_LONG_RANDOM_COOKIE',
   'CHANGE_ME_LONG_RANDOM_SECRET',
   'CHANGE_ME_OPENAI_OR_PROVIDER_KEY',
@@ -117,6 +120,22 @@ function main() {
 
   if (env.FILE_STORAGE_DRIVER && env.FILE_STORAGE_DRIVER !== 'r2') {
     errors.push('FILE_STORAGE_DRIVER should be r2 in production');
+  }
+
+  if (env.REDIS_PASSWORD && !looksPlaceholder(env.REDIS_PASSWORD) && !/^[A-Za-z0-9._~-]{24,}$/.test(env.REDIS_PASSWORD)) {
+    errors.push('REDIS_PASSWORD must be at least 24 URL-safe characters: A-Z a-z 0-9 . _ ~ -');
+  }
+
+  if (env.REDIS_URL && !looksPlaceholder(env.REDIS_URL)) {
+    if (!env.REDIS_URL.startsWith('redis://:')) {
+      errors.push('REDIS_URL must include Redis password, for example redis://:<password>@redis:6379');
+    }
+    if (!env.REDIS_URL.includes('@redis:6379')) {
+      errors.push('REDIS_URL must target the internal redis service: @redis:6379');
+    }
+    if (env.REDIS_PASSWORD && !looksPlaceholder(env.REDIS_PASSWORD) && !env.REDIS_URL.includes(`:${env.REDIS_PASSWORD}@`)) {
+      errors.push('REDIS_URL must use the same value as REDIS_PASSWORD');
+    }
   }
 
   for (const key of warnings) {

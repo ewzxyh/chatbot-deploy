@@ -1,5 +1,6 @@
 volumes:
   tiledesk-datadb:
+  redis-data:
 services:
   dashboard:
     build: ../tiledesk-dashboard
@@ -162,6 +163,7 @@ services:
       - CACHE_ENABLED=true
       - CACHE_REDIS_HOST=redis
       - CACHE_REDIS_PORT=6379
+      - CACHE_REDIS_PASSWORD
       - TILEBOT_LOG=info
       - FLOW_LOGS_ENABLED=true
       - >-
@@ -170,6 +172,9 @@ services:
       - "GPTKEY=${GPTKEY:-CHANGEIT}"
       - "KB_ENDPOINT_TRAIN=http://backend-llm-train:8000/api"
       - "KB_ENDPOINT_QA=http://backend-llm-qa:8000/api"
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
   server:
     build: ../tiledesk-server
@@ -208,6 +213,7 @@ services:
       - CACHE_ENGINE=redis
       - CACHE_REDIS_HOST=redis
       - CACHE_REDIS_PORT=6379
+      - CACHE_REDIS_PASSWORD
       - OPERATIONAL_RABBITMQ_QUEUES=jobsmanager,webhooks,messages,logs_queue,conversation-tags_queue
       - OPERATIONAL_QUEUE_READY_ALERT_THRESHOLD=100
       - "APPS_ACCESS_TOKEN_SECRET=${APPS_ACCESS_TOKEN_SECRET:-nodeauthsecret}"
@@ -258,6 +264,8 @@ services:
       mongo:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     ports:
       - "127.0.0.1:3000:3000"
@@ -326,7 +334,7 @@ services:
     environment:
       - TIMEOUT=240
       # - 'REDIS_URL=redis://host.docker.internal:6379'
-      - REDIS_URL=redis://redis:6379
+      - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
       - TILELLM_ROLE=train
       - WORKERS=3
       # WORKER_CONFIGURATION
@@ -353,7 +361,7 @@ services:
     environment:
       - TIMEOUT=240
       # - 'REDIS_URL=redis://host.docker.internal:6379'
-      - REDIS_URL=redis://redis:6379
+      - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
       - TILELLM_ROLE=qa
       - WORKERS=3
       # WORKER_CONFIGURATION
@@ -455,6 +463,8 @@ services:
   redis:
     container_name: redis
     image: "redis:7.0.5"
+    volumes:
+      - "redis-data:/data"
     ports:
       - "127.0.0.1:6379:6379"
     healthcheck:
