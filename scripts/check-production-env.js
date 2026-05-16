@@ -108,8 +108,6 @@ const warnings = [
   'CASEPAY_API_KEY',
   'CASEPAY_CONNECTION_ID',
   'CASEPAY_WEBHOOK_SECRET',
-  'OPERATIONAL_ALERT_WEBHOOK_URL',
-  'OPERATIONAL_ALERT_EMAIL_TO',
 ];
 
 const recommendedRabbitQueues = [
@@ -149,6 +147,14 @@ function parseQueueList(raw) {
     .split(',')
     .map((queue) => queue.trim())
     .filter(Boolean);
+}
+
+function hasValue(env, key) {
+  return Boolean(env[key]) && !looksPlaceholder(env[key]);
+}
+
+function isEnabled(value) {
+  return value === true || value === 'true' || value === '1' || value === 'yes';
 }
 
 function validateMongoUri(env, errors, uriKey, dbName, userKey, authSource) {
@@ -211,6 +217,16 @@ function main() {
 
   if (env.OPERATIONAL_ALERT_EMAIL_ENABLED === 'true' && env.EMAIL_ENABLED !== 'true') {
     errors.push('OPERATIONAL_ALERT_EMAIL_ENABLED=true requires EMAIL_ENABLED=true');
+  }
+
+  const hasOperationalAlertWebhook = hasValue(env, 'OPERATIONAL_ALERT_WEBHOOK_URL');
+  const hasOperationalAlertEmail = isEnabled(env.OPERATIONAL_ALERT_EMAIL_ENABLED) && hasValue(env, 'OPERATIONAL_ALERT_EMAIL_TO');
+  if (!hasOperationalAlertWebhook && !hasOperationalAlertEmail) {
+    errors.push('Production must configure at least one operational alert destination: OPERATIONAL_ALERT_WEBHOOK_URL or OPERATIONAL_ALERT_EMAIL_ENABLED=true with OPERATIONAL_ALERT_EMAIL_TO');
+  }
+
+  if (isEnabled(env.OPERATIONAL_ALERT_EMAIL_ENABLED) && !hasValue(env, 'OPERATIONAL_ALERT_EMAIL_TO')) {
+    errors.push('OPERATIONAL_ALERT_EMAIL_ENABLED=true requires OPERATIONAL_ALERT_EMAIL_TO');
   }
 
   [

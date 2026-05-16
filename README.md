@@ -137,3 +137,10 @@ OPERATIONAL_ALERT_EMAIL_TO=redacted@example.invalid
 ```
 
 Keep `OPERATIONAL_ALERT_MIN_SEVERITY=critical` at first. Use `OPERATIONAL_ALERT_NOTIFY_RESOLVED=true` only if you also want a notification when a critical alert is resolved.
+
+Production must have at least one alert destination configured before `node scripts/check-production-env.js .env.production` passes:
+
+- Webhook: set `OPERATIONAL_ALERT_WEBHOOK_URL` to a private HTTPS endpoint from n8n, Discord, Slack, or an incident service.
+- E-mail: set `OPERATIONAL_ALERT_EMAIL_ENABLED=true`, `OPERATIONAL_ALERT_EMAIL_TO`, and valid SMTP settings.
+
+After deploy, open Superadmin > Operacao and use `Testar notificacao`. A healthy production configuration should return `sent`; `skipped` means no destination is active.
