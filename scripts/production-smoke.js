@@ -271,6 +271,26 @@ async function checkAlertNotification(ctx) {
   });
 }
 
+async function checkSentry(ctx) {
+  const response = await request(ctx, 'POST', `${ctx.apiPrefix}/sadmin/sentry/test`, {
+    headers: { authorization: ctx.authorization },
+    json: {},
+  });
+
+  if (!response.ok || !response.json) {
+    return result('fail', 'sentry test', `HTTP ${response.statusCode}: ${shortBody(response.text)}`, {
+      path: `${ctx.apiPrefix}/sadmin/sentry/test`,
+    });
+  }
+
+  const sentry = response.json.result || {};
+  if (sentry.status === 'skipped') {
+    return result('warn', 'sentry test', `status=skipped, reason=${sentry.reason || 'unknown'}`, sentry);
+  }
+
+  return result(sentry.status === 'sent' || sentry.status === 'queued' ? 'ok' : 'fail', 'sentry test', `status=${sentry.status || 'unknown'}`, sentry);
+}
+
 async function runCheck(check, ctx) {
   try {
     return await check(ctx);
@@ -314,6 +334,7 @@ async function main() {
     timeoutMs: Number(firstValue([args['timeout-ms'], process.env.SMOKE_TIMEOUT_MS, '15000'])),
     skipStorageTest: Boolean(args['skip-storage-test']),
     skipAlertTest: Boolean(args['skip-alert-test']),
+    testSentry: Boolean(args['test-sentry'] || process.env.SMOKE_TEST_SENTRY === 'true'),
   };
 
   if (!Number.isInteger(ctx.timeoutMs) || ctx.timeoutMs < 1000) {
@@ -327,6 +348,9 @@ async function main() {
     checkStorage,
     checkAlertNotification,
   ];
+  if (ctx.testSentry) {
+    checks.push(checkSentry);
+  }
 
   const results = [];
   for (const check of checks) {

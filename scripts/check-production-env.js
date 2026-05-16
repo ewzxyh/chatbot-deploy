@@ -142,6 +142,15 @@ function assertPositiveInteger(env, key, errors) {
   }
 }
 
+function assertNumberBetween(env, key, min, max, errors) {
+  if (env[key] !== undefined && env[key] !== '' && !looksPlaceholder(env[key])) {
+    const parsed = Number(env[key]);
+    if (Number.isNaN(parsed) || parsed < min || parsed > max) {
+      errors.push(`${key} must be a number between ${min} and ${max}`);
+    }
+  }
+}
+
 function parseQueueList(raw) {
   return String(raw || '')
     .split(',')
@@ -227,6 +236,14 @@ function main() {
 
   if (isEnabled(env.OPERATIONAL_ALERT_EMAIL_ENABLED) && !hasValue(env, 'OPERATIONAL_ALERT_EMAIL_TO')) {
     errors.push('OPERATIONAL_ALERT_EMAIL_ENABLED=true requires OPERATIONAL_ALERT_EMAIL_TO');
+  }
+
+  assertNumberBetween(env, 'SENTRY_TRACES_SAMPLE_RATE', 0, 1, errors);
+  if (isEnabled(env.SENTRY_ENABLED) && !hasValue(env, 'SENTRY_DSN')) {
+    errors.push('SENTRY_ENABLED=true requires SENTRY_DSN');
+  }
+  if (hasValue(env, 'SENTRY_DSN') && !/^https:\/\/[^@\s]+@[^/\s]+\/\d+/.test(env.SENTRY_DSN)) {
+    errors.push('SENTRY_DSN must look like an https Sentry DSN');
   }
 
   [
