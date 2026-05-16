@@ -42,6 +42,7 @@ node scripts/check-production-env.js .env.production
 node scripts/r2-storage-smoke.js smoke --env .env.production
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --env .env.production
 ```
 
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
@@ -144,3 +145,33 @@ Production must have at least one alert destination configured before `node scri
 - E-mail: set `OPERATIONAL_ALERT_EMAIL_ENABLED=true`, `OPERATIONAL_ALERT_EMAIL_TO`, and valid SMTP settings.
 
 After deploy, open Superadmin > Operacao and use `Testar notificacao`. A healthy production configuration should return `sent`; `skipped` means no destination is active.
+
+## Production Smoke Test
+
+After each VPS deploy, run the smoke test from this repository:
+
+```bash
+SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --env .env.production
+```
+
+It checks the public/proxy path, not Docker internals:
+
+- `GET /dashboard/`
+- `GET /api/sadmin/health/summary`
+- `GET /api/sadmin/health/queues`
+- `POST /api/sadmin/health/storage/test`
+- `POST /api/sadmin/operational-alerts/test-notification`
+
+The script exits with code `1` if a required check fails. `WARN` is allowed for expected non-critical states, such as a local environment with no alert webhook/e-mail destination. In production, the alert notification check should return `OK ... status=sent`.
+
+Useful overrides:
+
+```bash
+node scripts/production-smoke.js \
+  --base-url https://app.example.com \
+  --admin-email redacted@example.invalid \
+  --admin-password '<superadmin-password>' \
+  --timeout-ms 15000
+```
+
+Do not commit the real superadmin password. Prefer passing it through the shell or a temporary deployment secret.
