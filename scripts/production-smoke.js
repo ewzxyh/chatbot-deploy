@@ -243,6 +243,9 @@ async function checkAlertNotification(ctx) {
   if (ctx.skipAlertTest) {
     return result('warn', 'alert notification', 'skipped by --skip-alert-test');
   }
+  if (!ctx.testAlertNotification) {
+    return result('warn', 'alert notification', 'skipped; enable with --test-alert-notification');
+  }
 
   const response = await request(ctx, 'POST', `${ctx.apiPrefix}/sadmin/operational-alerts/test-notification`, {
     headers: { authorization: ctx.authorization },
@@ -334,6 +337,7 @@ async function main() {
     timeoutMs: Number(firstValue([args['timeout-ms'], process.env.SMOKE_TIMEOUT_MS, '15000'])),
     skipStorageTest: Boolean(args['skip-storage-test']),
     skipAlertTest: Boolean(args['skip-alert-test']),
+    testAlertNotification: Boolean(args['test-alert-notification'] || process.env.SMOKE_TEST_ALERT_NOTIFICATION === 'true'),
     testSentry: Boolean(args['test-sentry'] || process.env.SMOKE_TEST_SENTRY === 'true'),
   };
 
