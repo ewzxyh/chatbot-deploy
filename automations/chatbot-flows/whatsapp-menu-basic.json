@@ -1,0 +1,198 @@
+{
+  "name": "ChatCase WhatsApp menu basico",
+  "description": "Fluxo inicial de automacao para canais de mensagem: saudacao, menu numerico, planos e encaminhamento para atendimento humano.",
+  "type": "tilebot",
+  "subtype": "chatbot",
+  "language": "pt",
+  "intentsEngine": "none",
+  "attributes": {
+    "source": "chatcase-tiledesk-deploy",
+    "channels": [
+      "whatsapp",
+      "casezap",
+      "telegram"
+    ],
+    "rules": []
+  },
+  "intents": [
+    {
+      "webhook_enabled": false,
+      "enabled": true,
+      "intent_id": "cc-default-fallback",
+      "intent_display_name": "defaultFallback",
+      "answer": "Nao entendi sua mensagem. Digite menu para ver as opcoes ou 2 para falar com uma atendente.",
+      "actions": [
+        {
+          "_tdActionType": "reply",
+          "text": "Nao entendi sua mensagem. Digite menu para ver as opcoes ou 2 para falar com uma atendente.",
+          "attributes": {
+            "disableInputMessage": false,
+            "commands": [
+              {
+                "type": "wait",
+                "time": 300
+              },
+              {
+                "type": "message",
+                "message": {
+                  "type": "text",
+                  "text": "Nao entendi sua mensagem. Digite menu para ver as opcoes ou 2 para falar com uma atendente."
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "attributes": {
+        "position": {
+          "x": 720,
+          "y": 500
+        }
+      }
+    },
+    {
+      "webhook_enabled": false,
+      "enabled": true,
+      "intent_id": "cc-start",
+      "intent_display_name": "start",
+      "question": "\\start",
+      "answer": "Ola! Sou o assistente ChatCase.\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2.",
+      "actions": [
+        {
+          "_tdActionType": "reply",
+          "text": "Ola! Sou o assistente ChatCase.\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2.",
+          "attributes": {
+            "disableInputMessage": false,
+            "commands": [
+              {
+                "type": "wait",
+                "time": 300
+              },
+              {
+                "type": "message",
+                "message": {
+                  "type": "text",
+                  "text": "Ola! Sou o assistente ChatCase.\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2."
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "attributes": {
+        "position": {
+          "x": 150,
+          "y": 160
+        }
+      }
+    },
+    {
+      "webhook_enabled": false,
+      "enabled": true,
+      "intent_id": "cc-menu",
+      "intent_display_name": "menu",
+      "question": "menu",
+      "answer": "Menu ChatCase:\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2.",
+      "actions": [
+        {
+          "_tdActionType": "reply",
+          "text": "Menu ChatCase:\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2.",
+          "attributes": {
+            "disableInputMessage": false,
+            "commands": [
+              {
+                "type": "wait",
+                "time": 300
+              },
+              {
+                "type": "message",
+                "message": {
+                  "type": "text",
+                  "text": "Menu ChatCase:\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2."
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "attributes": {
+        "position": {
+          "x": 460,
+          "y": 160
+        }
+      }
+    },
+    {
+      "webhook_enabled": false,
+      "enabled": true,
+      "intent_id": "cc-plans",
+      "intent_display_name": "plans",
+      "question": "1",
+      "answer": "Planos ChatCase:\n\n- Starter: atendimento basico e canais essenciais.\n- Business: automacoes, equipe e integracoes avancadas.\n\nDigite 2 para falar com uma atendente ou menu para voltar.",
+      "actions": [
+        {
+          "_tdActionType": "reply",
+          "text": "Planos ChatCase:\n\n- Starter: atendimento basico e canais essenciais.\n- Business: automacoes, equipe e integracoes avancadas.\n\nDigite 2 para falar com uma atendente ou menu para voltar.",
+          "attributes": {
+            "disableInputMessage": false,
+            "commands": [
+              {
+                "type": "wait",
+                "time": 300
+              },
+              {
+                "type": "message",
+                "message": {
+                  "type": "text",
+                  "text": "Planos ChatCase:\n\n- Starter: atendimento basico e canais essenciais.\n- Business: automacoes, equipe e integracoes avancadas.\n\nDigite 2 para falar com uma atendente ou menu para voltar."
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "attributes": {
+        "position": {
+          "x": 460,
+          "y": 360
+        }
+      }
+    },
+    {
+      "webhook_enabled": false,
+      "enabled": true,
+      "intent_id": "cc-human-handoff",
+      "intent_display_name": "human_handoff",
+      "question": "2",
+      "answer": "Certo, vou chamar uma atendente. Enquanto isso, descreva em uma mensagem o que voce precisa.",
+      "actions": [
+        {
+          "_tdActionType": "reply",
+          "text": "Certo, vou chamar uma atendente. Enquanto isso, descreva em uma mensagem o que voce precisa.",
+          "attributes": {
+            "disableInputMessage": false,
+            "commands": [
+              {
+                "type": "wait",
+                "time": 300
+              },
+              {
+                "type": "message",
+                "message": {
+                  "type": "text",
+                  "text": "Certo, vou chamar uma atendente. Enquanto isso, descreva em uma mensagem o que voce precisa."
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "attributes": {
+        "position": {
+          "x": 760,
+          "y": 360
+        }
+      }
+    }
+  ]
+}
