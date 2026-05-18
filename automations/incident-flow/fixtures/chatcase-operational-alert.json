@@ -1,0 +1,16 @@
+{
+  "event": "alert.opened",
+  "generatedAt": "2026-05-18T19:30:00.000Z",
+  "alert": {
+    "key": "rabbitmq:webhooks:backlog",
+    "type": "queue.backlog",
+    "severity": "critical",
+    "status": "open",
+    "title": "Fila RabbitMQ webhooks acumulando",
+    "message": "A fila webhooks tem mensagens acumuladas ha mais de 5 minutos. token=secret123",
+    "service": "rabbitmq",
+    "channel": "system",
+    "project": "Ewzxyh",
+    "lastAt": "2026-05-18T19:29:59.000Z"
+  }
+}

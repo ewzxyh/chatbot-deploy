@@ -146,6 +146,44 @@ Production must have at least one alert destination configured before `node scri
 
 After deploy, open Superadmin > Operacao and use `Testar notificacao`. A healthy production configuration should return `sent`; `skipped` means no destination is active.
 
+## Incident Automation Flow
+
+This repository includes a small webhook automation flow for incident routing:
+
+- ChatCase operational alerts: `POST /webhooks/chatcase/operational-alert`
+- Sentry issue alerts: `POST /webhooks/sentry/issue-alert`
+- Health check: `GET /healthz`
+
+The flow normalizes ChatCase and Sentry payloads into one incident shape, redacts common secrets/PII, applies `INCIDENT_MIN_SEVERITY`, and can either dry-run or send a Resend e-mail.
+
+Run the local dry-run test:
+
+```bash
+node scripts/test-incident-automation-flow.js
+```
+
+Run the webhook locally:
+
+```bash
+INCIDENT_WEBHOOK_SECRET='<long-random-secret>' \
+INCIDENT_AUTOMATION_DRY_RUN=true \
+node scripts/incident-automation-webhook.js
+```
+
+To connect ChatCase, set `OPERATIONAL_ALERT_WEBHOOK_URL` to the public HTTPS URL for:
+
+```text
+https://automation.example.com/webhooks/chatcase/operational-alert?secret=<long-random-secret>
+```
+
+To connect Sentry, create an issue alert webhook pointing to:
+
+```text
+https://automation.example.com/webhooks/sentry/issue-alert?secret=<long-random-secret>
+```
+
+Keep `INCIDENT_AUTOMATION_DRY_RUN=true` until the endpoint, secret, and routing are verified. To send via Resend, set `INCIDENT_AUTOMATION_DRY_RUN=false`, `RESEND_API_KEY`, `INCIDENT_EMAIL_FROM`, and `INCIDENT_EMAIL_TO`.
+
 ## Production Smoke Test
 
 After each VPS deploy, run the smoke test from this repository:
@@ -160,9 +198,8 @@ It checks the public/proxy path, not Docker internals:
 - `GET /api/sadmin/health/summary`
 - `GET /api/sadmin/health/queues`
 - `POST /api/sadmin/health/storage/test`
-- `POST /api/sadmin/operational-alerts/test-notification`
 
-The script exits with code `1` if a required check fails. `WARN` is allowed for expected non-critical states, such as a local environment with no alert webhook/e-mail destination. In production, the alert notification check should return `OK ... status=sent`.
+The script exits with code `1` if a required check fails. `WARN` is allowed for expected non-critical states. It does not send operational alert e-mails by default. To test the real alert destination, run with `--test-alert-notification` or `SMOKE_TEST_ALERT_NOTIFICATION=true`; that explicit alert check should return `OK ... status=sent` in production.
 
 Useful overrides:
 

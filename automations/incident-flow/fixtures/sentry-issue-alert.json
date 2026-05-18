@@ -1,0 +1,22 @@
+{
+  "action": "created",
+  "triggered_rule": "High priority backend issue",
+  "data": {
+    "project": {
+      "slug": "chatcase-server",
+      "name": "chatcase-server"
+    },
+    "issue": {
+      "id": "4511412397146112",
+      "shortId": "CHATCASE-SERVER-1",
+      "title": "ChatCase manual Sentry test event",
+      "level": "error",
+      "culprit": "routes/sadmin.js",
+      "web_url": "https://chatcase.sentry.io/issues/4511412397146112/?token=[REDACTED_TOKEN]",
+      "lastSeen": "2026-05-18T19:30:00.000Z",
+      "metadata": {
+        "value": "Manual backend test for redacted@example.invalid"
+      }
+    }
+  }
+}
