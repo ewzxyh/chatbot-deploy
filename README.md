@@ -141,7 +141,7 @@ Keep `OPERATIONAL_ALERT_MIN_SEVERITY=critical` at first. Use `OPERATIONAL_ALERT_
 
 Production must have at least one alert destination configured before `node scripts/check-production-env.js .env.production` passes:
 
-- Webhook: set `OPERATIONAL_ALERT_WEBHOOK_URL` to a private HTTPS endpoint from n8n, Discord, Slack, or an incident service.
+- Webhook: for the first production cut, use the built-in incident automation receiver exposed by the proxy at `/automation/`. n8n can replace it later if the flow needs approvals, branching, or external integrations.
 - E-mail: set `OPERATIONAL_ALERT_EMAIL_ENABLED=true`, `OPERATIONAL_ALERT_EMAIL_TO`, and valid SMTP settings.
 
 After deploy, open Superadmin > Operacao and use `Testar notificacao`. A healthy production configuration should return `sent`; `skipped` means no destination is active.
@@ -162,7 +162,7 @@ Run the local dry-run test:
 node scripts/test-incident-automation-flow.js
 ```
 
-Run the webhook locally:
+Run the webhook locally through Docker Compose or directly:
 
 ```bash
 INCIDENT_WEBHOOK_SECRET='<long-random-secret>' \
@@ -170,16 +170,16 @@ INCIDENT_AUTOMATION_DRY_RUN=true \
 node scripts/incident-automation-webhook.js
 ```
 
-To connect ChatCase, set `OPERATIONAL_ALERT_WEBHOOK_URL` to the public HTTPS URL for:
+To connect ChatCase in production, set `OPERATIONAL_ALERT_WEBHOOK_URL` to the public HTTPS URL for:
 
 ```text
-https://automation.example.com/webhooks/chatcase/operational-alert?secret=<long-random-secret>
+https://app.example.com/automation/webhooks/chatcase/operational-alert?secret=<long-random-secret>
 ```
 
 To connect Sentry, create an issue alert webhook pointing to:
 
 ```text
-https://automation.example.com/webhooks/sentry/issue-alert?secret=<long-random-secret>
+https://app.example.com/automation/webhooks/sentry/issue-alert?secret=<long-random-secret>
 ```
 
 Keep `INCIDENT_AUTOMATION_DRY_RUN=true` until the endpoint, secret, and routing are verified. To send via Resend, set `INCIDENT_AUTOMATION_DRY_RUN=false`, `RESEND_API_KEY`, `INCIDENT_EMAIL_FROM`, and `INCIDENT_EMAIL_TO`.

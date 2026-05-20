@@ -302,6 +302,27 @@ services:
           timeout: 5s
           retries: 5
           start_period: 40s
+  incident-automation:
+    image: node:20-alpine
+    container_name: incident-automation
+    working_dir: /app
+    command: ["node", "scripts/incident-automation-webhook.js"]
+    volumes:
+      - ./:/app:ro
+    environment:
+      - INCIDENT_AUTOMATION_HOST=0.0.0.0
+      - "INCIDENT_AUTOMATION_PORT=${INCIDENT_AUTOMATION_PORT:-8787}"
+      - "INCIDENT_AUTOMATION_DRY_RUN=${INCIDENT_AUTOMATION_DRY_RUN:-true}"
+      - INCIDENT_WEBHOOK_SECRET
+      - "INCIDENT_MIN_SEVERITY=${INCIDENT_MIN_SEVERITY:-critical}"
+      - INCIDENT_EMAIL_FROM
+      - INCIDENT_EMAIL_TO
+      - RESEND_API_KEY
+      - EMAIL_FROM_ADDRESS
+      - OPERATIONAL_ALERT_EMAIL_TO
+    ports:
+      - "127.0.0.1:${INCIDENT_AUTOMATION_PORT:-8787}:8787"
+    restart: unless-stopped
   chat21httpserver:
     image: "chat21/chat21-http-server:0.2.37"
     #image: chat21http-gab:0.1.11
