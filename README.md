@@ -9,7 +9,7 @@ This repository contains Docker Compose, nginx proxy config, ChatCase runtime pa
 - `docker-compose.yml`: local/production container orchestration.
 - `proxy-nginx.conf`: nginx routes, cache headers, websocket proxying, and app shell cache rules.
 - `ionic-rebrand.sh`: runtime customization for `chat21-ionic`.
-- `scripts/`: Mongo backup, restore-test, R2 upload/download, and daily backup wrapper.
+- `scripts/`: Mongo backup, restore-test, R2 upload/download, daily backup wrapper, and config checks.
 - `vps/`: Linux VPS backup service/timer templates and installer.
 - `.env.example`: safe template for local/VPS secrets.
 
@@ -30,6 +30,8 @@ Keep `.env`, backups, and local storage directories out of git.
 - Use `R2_*` for uploads and conversation attachments.
 - Prefer separate private R2 buckets for backups and uploads.
 - Revoke any R2 credentials that were shared during local testing before production.
+- Generate separate values for `CHAT21_JWT_SECRET`, `JWT_SECRET_KEY`, `APPS_ACCESS_TOKEN_SECRET`, and `SESSION_SECRET`.
+- Fill `CHAT21_ADMIN_TOKEN`, `PUSH_WH_CHAT21_API_ADMIN_TOKEN`, and `PUSH_WH_WEBHOOK_TOKEN`; production must not fall back to the public dev defaults in `docker-compose.yml`.
 
 ## Production Setup
 
@@ -47,7 +49,23 @@ SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --
 
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
 
-In production, only the proxy port should be public. Internal service ports are bound to `127.0.0.1` by default.
+In production, only the proxy port should be published. `docker-compose.prod.yml` resets inherited internal service ports with `ports: !reset []`, so Mongo, Redis, RabbitMQ, server, chat, dashboard, Qdrant, workers, and the incident receiver are reachable only on the Docker network. Use the proxy for every public route.
+
+## Proxy Hardening
+
+`proxy-nginx.conf` applies the production-facing hardening layer:
+
+- security headers for dashboard, CDS, chat, API, chat API, and static assets;
+- CSP/frame protection on dashboard, CDS, and chat without applying frame blocking to `/widget/`;
+- HSTS when the incoming request is known to be HTTPS through `X-Forwarded-Proto`;
+- request limits of `10r/s` on `/api/` and `20r/s` on `/chatapi/`, both returning `429` when exceeded.
+
+Run this before deploy changes:
+
+```bash
+node scripts/test-hardening-config.js
+docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+```
 
 ## MongoDB
 

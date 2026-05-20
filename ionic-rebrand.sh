@@ -10,6 +10,16 @@ grep -q 'chatcase-pdf-preview.js' /usr/share/nginx/html/index.html || \
 sed -i 's/href="assets\/icon\/favicon.ico[^"]*"/href="assets\/icon\/favicon.ico?v=chatcase-20260508"/g' /usr/share/nginx/html/index.html
 sed -i 's/href=".\/manifest.json[^"]*"/href=".\/manifest.json?v=chatcase-20260508"/g' /usr/share/nginx/html/index.html
 
+find /usr/share/nginx/html -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' \) -print | while read -r file; do
+  sed -i \
+    -e 's#<link[^>]*fonts\.googleapis\.com[^>]*>##g' \
+    -e 's#<link[^>]*fonts\.gstatic\.com[^>]*>##g' \
+    -e 's#@import[[:space:]]*url([^)]*fonts\.googleapis\.com[^)]*);##g' \
+    -e "s#https://fonts\\.googleapis\\.com[^\"' )]*##g" \
+    -e "s#https://fonts\\.gstatic\\.com[^\"' )]*##g" \
+    "$file"
+done
+
 cat > /usr/share/nginx/html/chatcase-pdf-preview.js <<'EOF'
 (function () {
   if (window.__chatcaseAttachmentEnhancerInstalled) {

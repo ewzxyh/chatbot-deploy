@@ -7,7 +7,20 @@ services:
     ports:
       - "${PROXY_HTTP_BIND:?Set PROXY_HTTP_BIND, for example 80 or 127.0.0.1:8081}:80"
 
+  dashboard:
+    ports: !reset []
+
+  cds:
+    ports: !reset []
+
+  webwidget:
+    ports: !reset []
+
+  ionic:
+    ports: !reset []
+
   mongo:
+    ports: !reset []
     command: ["mongod", "--bind_ip_all", "--auth"]
     volumes:
       - ./mongo-init:/docker-entrypoint-initdb.d:ro
@@ -32,12 +45,14 @@ services:
       start_period: 40s
 
   rabbitmq:
+    ports: !reset []
     environment:
       RABBITMQ_ERLANG_COOKIE: "${RABBITMQ_ERLANG_COOKIE:?Set RABBITMQ_ERLANG_COOKIE}"
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS}"
 
   redis:
+    ports: !reset []
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD:?Set REDIS_PASSWORD}"
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD}", "--appendonly", "yes"]
@@ -49,6 +64,7 @@ services:
       start_period: 10s
 
   server:
+    ports: !reset []
     environment:
       - "AMQP_MANAGER_URL=${AMQP_MANAGER_URL:?Set AMQP_MANAGER_URL}"
       - "RABBITMQ_MANAGEMENT_URL=${RABBITMQ_MANAGEMENT_URL:?Set RABBITMQ_MANAGEMENT_URL}"
@@ -57,8 +73,10 @@ services:
       - "MONGODB_URI=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
       - "MONGODB_LOGS_URI=${TILEDESK_LOGS_MONGODB_URI:?Set TILEDESK_LOGS_MONGODB_URI}"
       - "CHAT21_JWT_SECRET=${CHAT21_JWT_SECRET:?Set CHAT21_JWT_SECRET}"
+      - "CHAT21_ADMIN_TOKEN=${CHAT21_ADMIN_TOKEN:?Set CHAT21_ADMIN_TOKEN}"
       - "APPS_ACCESS_TOKEN_SECRET=${APPS_ACCESS_TOKEN_SECRET:?Set APPS_ACCESS_TOKEN_SECRET}"
       - "JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"
+      - "SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET}"
       - "FB_APP_SECRET=${FB_APP_SECRET:?Set FB_APP_SECRET}"
       - "VERIFY_TOKEN=${VERIFY_TOKEN:?Set VERIFY_TOKEN}"
       - "FILE_STORAGE_DRIVER=${FILE_STORAGE_DRIVER:?Set FILE_STORAGE_DRIVER}"
@@ -68,16 +86,24 @@ services:
       - "R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:?Set R2_SECRET_ACCESS_KEY}"
       - "R2_KEY_PREFIX=${R2_KEY_PREFIX:?Set R2_KEY_PREFIX}"
 
+  incident-automation:
+    ports: !reset []
+
   chat21httpserver:
+    ports: !reset []
     environment:
       - "MONGODB_URI=${CHAT21_MONGODB_URI:?Set CHAT21_MONGODB_URI}"
       - "JWT_KEY=${CHAT21_JWT_SECRET:?Set CHAT21_JWT_SECRET}"
       - "RABBITMQ_URI=${RABBITMQ_ADMIN_URI:?Set RABBITMQ_ADMIN_URI}"
+      - "PUSH_WH_CHAT21_API_ADMIN_TOKEN=${PUSH_WH_CHAT21_API_ADMIN_TOKEN:?Set PUSH_WH_CHAT21_API_ADMIN_TOKEN}"
+      - "PUSH_WH_WEBHOOK_TOKEN=${PUSH_WH_WEBHOOK_TOKEN:?Set PUSH_WH_WEBHOOK_TOKEN}"
 
   chat21server:
+    ports: !reset []
     environment:
       - "MONGODB_URI=${CHAT21_MONGODB_URI:?Set CHAT21_MONGODB_URI}"
       - "RABBITMQ_URI=${RABBITMQ_URI:?Set RABBITMQ_URI}"
+      - "WEBHOOK_ENDPOINTS=http://server:3000/chat21/requests,http://chat21httpserver:8004/api/tilechat/push/webhook/endpoint/${PUSH_WH_WEBHOOK_TOKEN:?Set PUSH_WH_WEBHOOK_TOKEN}"
 
   chatbot:
     environment:
@@ -87,6 +113,7 @@ services:
       - "GPTKEY=${GPTKEY:?Set GPTKEY}"
 
   backend-llm-train:
+    ports: !reset []
     environment:
       - "AMQP_MANAGER_URL=${AMQP_MANAGER_URL:?Set AMQP_MANAGER_URL}"
       - "MONGODB_URL=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
@@ -95,9 +122,13 @@ services:
       - "JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"
 
   backend-llm-qa:
+    ports: !reset []
     environment:
       - "AMQP_MANAGER_URL=${AMQP_MANAGER_URL:?Set AMQP_MANAGER_URL}"
       - "MONGODB_URL=${TILEDESK_MONGODB_URI:?Set TILEDESK_MONGODB_URI}"
       - "REDIS_URL=${REDIS_URL:?Set REDIS_URL}"
       - "GPTKEY=${GPTKEY:?Set GPTKEY}"
       - "JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"
+
+  qdrant:
+    ports: !reset []

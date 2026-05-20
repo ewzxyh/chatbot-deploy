@@ -57,7 +57,11 @@ const required = [
   'CHAT21_JWT_SECRET',
   'JWT_SECRET_KEY',
   'APPS_ACCESS_TOKEN_SECRET',
+  'SESSION_SECRET',
   'GPTKEY',
+  'CHAT21_ADMIN_TOKEN',
+  'PUSH_WH_CHAT21_API_ADMIN_TOKEN',
+  'PUSH_WH_WEBHOOK_TOKEN',
   'ADMIN_EMAIL',
   'SUPER_ADMIN_EMAILS',
   'FB_APP_ID',
@@ -88,6 +92,13 @@ const weakValues = new Set([
   'CHANGE_ME_REDIS_PASSWORD',
   'CHANGE_ME_LONG_RANDOM_COOKIE',
   'CHANGE_ME_LONG_RANDOM_SECRET',
+  'CHANGE_ME_LONG_RANDOM_SESSION_SECRET',
+  'CHANGE_ME_LONG_RANDOM_API_JWT_SECRET',
+  'CHANGE_ME_LONG_RANDOM_CHAT21_JWT_SECRET',
+  'CHANGE_ME_LONG_RANDOM_APPS_ACCESS_SECRET',
+  'CHANGE_ME_CHAT21_ADMIN_TOKEN',
+  'CHANGE_ME_PUSH_API_ADMIN_TOKEN',
+  'CHANGE_ME_PUSH_WEBHOOK_TOKEN',
   'CHANGE_ME_OPENAI_OR_PROVIDER_KEY',
   'CHANGE_ME_LONG_RANDOM_VERIFY_TOKEN',
   'CHANGEIT',
@@ -99,9 +110,6 @@ const weakValues = new Set([
 ]);
 
 const warnings = [
-  'CHAT21_ADMIN_TOKEN',
-  'PUSH_WH_CHAT21_API_ADMIN_TOKEN',
-  'PUSH_WH_WEBHOOK_TOKEN',
   'EMAIL_HOST',
   'EMAIL_USERNAME',
   'EMAIL_PASSWORD',
@@ -130,6 +138,27 @@ function looksPlaceholder(value) {
 function assertUrlSafeSecret(env, key, errors) {
   if (env[key] && !looksPlaceholder(env[key]) && !/^[A-Za-z0-9._~-]{24,}$/.test(env[key])) {
     errors.push(`${key} must be at least 24 URL-safe characters: A-Z a-z 0-9 . _ ~ -`);
+  }
+}
+
+function assertDifferent(env, leftKey, rightKey, errors) {
+  if (hasValue(env, leftKey) && hasValue(env, rightKey) && env[leftKey] === env[rightKey]) {
+    errors.push(`${leftKey} must be different from ${rightKey}`);
+  }
+}
+
+function validateAmqpUri(env, errors, key) {
+  const uri = env[key];
+  if (!uri || looksPlaceholder(uri)) return;
+
+  if (!uri.startsWith('amqp://')) {
+    errors.push(`${key} must start with amqp://`);
+  }
+  if (!uri.includes('@rabbitmq:5672')) {
+    errors.push(`${key} must target the internal RabbitMQ service: @rabbitmq:5672`);
+  }
+  if (/tokenKey|CHANGE_ME|change-me|ignored:ignored/i.test(uri)) {
+    errors.push(`${key} must not use a dev or placeholder token`);
   }
 }
 
@@ -251,7 +280,27 @@ function main() {
     'MONGO_LOGS_PASSWORD',
     'MONGO_CHAT21_PASSWORD',
     'REDIS_PASSWORD',
+    'CHAT21_JWT_SECRET',
+    'JWT_SECRET_KEY',
+    'APPS_ACCESS_TOKEN_SECRET',
+    'SESSION_SECRET',
+    'VERIFY_TOKEN',
+    'INCIDENT_WEBHOOK_SECRET',
+    'CHAT21_ADMIN_TOKEN',
+    'PUSH_WH_CHAT21_API_ADMIN_TOKEN',
+    'PUSH_WH_WEBHOOK_TOKEN',
   ].forEach((key) => assertUrlSafeSecret(env, key, errors));
+
+  assertDifferent(env, 'JWT_SECRET_KEY', 'CHAT21_JWT_SECRET', errors);
+  assertDifferent(env, 'APPS_ACCESS_TOKEN_SECRET', 'JWT_SECRET_KEY', errors);
+  assertDifferent(env, 'APPS_ACCESS_TOKEN_SECRET', 'CHAT21_JWT_SECRET', errors);
+  assertDifferent(env, 'SESSION_SECRET', 'JWT_SECRET_KEY', errors);
+  assertDifferent(env, 'SESSION_SECRET', 'CHAT21_JWT_SECRET', errors);
+  assertDifferent(env, 'SESSION_SECRET', 'APPS_ACCESS_TOKEN_SECRET', errors);
+
+  validateAmqpUri(env, errors, 'AMQP_MANAGER_URL');
+  validateAmqpUri(env, errors, 'RABBITMQ_URI');
+  validateAmqpUri(env, errors, 'RABBITMQ_ADMIN_URI');
 
   if (env.REDIS_URL && !looksPlaceholder(env.REDIS_URL)) {
     if (!env.REDIS_URL.startsWith('redis://:')) {
