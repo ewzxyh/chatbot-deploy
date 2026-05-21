@@ -101,6 +101,7 @@ const weakValues = new Set([
   'CHANGE_ME_PUSH_WEBHOOK_TOKEN',
   'CHANGE_ME_OPENAI_OR_PROVIDER_KEY',
   'CHANGE_ME_LONG_RANDOM_VERIFY_TOKEN',
+  'CHANGE_ME_LONG_RANDOM_MEDIA_CDN_SIGNING_SECRET',
   'CHANGEIT',
   'CHANGEIT_FB_APP_SECRET',
   'tokenKey',
@@ -275,6 +276,21 @@ function main() {
     errors.push('SENTRY_DSN must look like an https Sentry DSN');
   }
 
+  if (isEnabled(env.MEDIA_CDN_ENABLED)) {
+    if (!hasValue(env, 'MEDIA_CDN_BASE_URL')) {
+      errors.push('MEDIA_CDN_ENABLED=true requires MEDIA_CDN_BASE_URL');
+    } else if (!env.MEDIA_CDN_BASE_URL.startsWith('https://')) {
+      errors.push('MEDIA_CDN_BASE_URL must use https:// in production');
+    }
+    if (!hasValue(env, 'MEDIA_CDN_SIGNING_SECRET')) {
+      errors.push('MEDIA_CDN_ENABLED=true requires MEDIA_CDN_SIGNING_SECRET');
+    }
+    assertPositiveInteger(env, 'MEDIA_CDN_DEFAULT_TTL_SECONDS', errors);
+    if (env.MEDIA_CDN_REPLACE_SRC && !['true', 'false'].includes(env.MEDIA_CDN_REPLACE_SRC)) {
+      errors.push('MEDIA_CDN_REPLACE_SRC must be true or false');
+    }
+  }
+
   [
     'MONGO_TILEDESK_PASSWORD',
     'MONGO_LOGS_PASSWORD',
@@ -289,6 +305,7 @@ function main() {
     'CHAT21_ADMIN_TOKEN',
     'PUSH_WH_CHAT21_API_ADMIN_TOKEN',
     'PUSH_WH_WEBHOOK_TOKEN',
+    'MEDIA_CDN_SIGNING_SECRET',
   ].forEach((key) => assertUrlSafeSecret(env, key, errors));
 
   assertDifferent(env, 'JWT_SECRET_KEY', 'CHAT21_JWT_SECRET', errors);
