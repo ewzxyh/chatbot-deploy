@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChatCase Community | Modelos de automacao</title>
+    <meta name="description" content="Modelos publicos de automacao ChatCase para WhatsApp, CaseZap, Telegram e atendimento humano.">
+    <meta property="og:title" content="ChatCase Community">
+    <meta property="og:description" content="Escolha modelos prontos de automacao e importe para seu projeto ChatCase.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/community/">
+    <link rel="canonical" href="/community/">
+    <link rel="icon" href="/dashboard/assets/img/logos/favicon.ico">
+    <link rel="stylesheet" href="/community/assets/community.css?v=20260521-1">
+    <script defer src="/community/assets/community.js?v=20260521-1"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand-link" href="/community/" aria-label="ChatCase Community">
+        <img src="/dashboard/assets/img/logos/chatcase-logo.svg" alt="ChatCase" class="brand-logo">
+        <span class="brand-section">Community</span>
+      </a>
+      <nav class="site-nav" aria-label="Navegacao principal">
+        <a href="#templates">Modelos</a>
+        <a href="/dashboard/#/login">Entrar</a>
+        <a class="button button-primary" href="/dashboard/#/signup">Comecar gratis</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro-section" aria-labelledby="community-title">
+        <div class="intro-copy">
+          <h1 id="community-title">Modelos prontos para automatizar conversas</h1>
+          <p>Escolha um fluxo certificado, veja os canais suportados e importe para seu projeto ChatCase quando estiver pronto para configurar.</p>
+        </div>
+        <div class="intro-summary" aria-label="Resumo da galeria">
+          <div>
+            <strong id="summary-total">0</strong>
+            <span>modelos publicados</span>
+          </div>
+          <div>
+            <strong id="summary-channels">0</strong>
+            <span>canais mapeados</span>
+          </div>
+          <div>
+            <strong id="summary-certified">0</strong>
+            <span>certificados</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="templates-section" id="templates" aria-labelledby="templates-title">
+        <div class="templates-header">
+          <div>
+            <h2 id="templates-title">Biblioteca de modelos</h2>
+            <p id="templates-status">Carregando modelos publicos...</p>
+          </div>
+          <label class="search-box">
+            <span>Buscar</span>
+            <input id="template-search" type="search" autocomplete="off" placeholder="Nome, canal, categoria ou tag">
+          </label>
+        </div>
+
+        <div class="filter-row" aria-label="Filtros de canal">
+          <div class="filter-group" id="channel-filters"></div>
+          <div class="filter-group" id="category-filters"></div>
+        </div>
+
+        <div class="community-layout">
+          <div>
+            <div class="result-count" id="result-count"></div>
+            <div class="templates-grid" id="templates-grid" aria-live="polite"></div>
+          </div>
+          <aside class="template-detail" id="template-detail" aria-label="Detalhes do modelo">
+            <div class="detail-empty">
+              <strong>Selecione um modelo</strong>
+              <span>Os detalhes e a acao de importacao aparecem aqui.</span>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>ChatCase Community</span>
+      <a href="/dashboard/#/signup">Criar conta</a>
+      <a href="/dashboard/#/login">Acessar dashboard</a>
+    </footer>
+  </body>
+</html>

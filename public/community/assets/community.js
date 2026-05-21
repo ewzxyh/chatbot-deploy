@@ -1,0 +1,463 @@
+(function () {
+  'use strict';
+
+  var ENDPOINTS = {
+    templates: '/api/modules/templates/public/templates',
+    community: '/api/modules/templates/public/community'
+  };
+  var LABELS = {
+    casezap: 'CaseZap',
+    whatsapp: 'WhatsApp',
+    waba: 'WABA',
+    telegram: 'Telegram',
+    messenger: 'Messenger',
+    sms: 'SMS',
+    voice: 'Voice',
+    email: 'E-mail',
+    widget: 'Widget',
+    atendimento: 'Atendimento',
+    'customer satisfaction': 'Satisfacao do cliente',
+    'increase sales': 'Aumentar vendas'
+  };
+  var KNOWN_CHANNELS = ['whatsapp', 'casezap', 'telegram', 'messenger', 'sms', 'voice', 'email', 'widget', 'waba'];
+
+  var fallbackTemplates = [
+    {
+      _id: 'chatcase-whatsapp-menu-basic',
+      certified: true,
+      public: true,
+      language: 'pt',
+      name: 'ChatCase WhatsApp menu basico',
+      title: 'Menu basico para WhatsApp',
+      description: 'Fluxo inicial de automacao para canais de mensagem: saudacao, menu numerico, planos e encaminhamento para atendimento humano.',
+      short_description: 'Menu inicial para WhatsApp, CaseZap e Telegram com saudacao, opcoes numericas e handoff para atendimento humano.',
+      type: 'tilebot',
+      subtype: 'chatbot',
+      mainCategory: 'Atendimento',
+      bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
+      tags: ['whatsapp', 'casezap', 'telegram', 'atendimento'],
+      certifiedTags: [
+        { name: 'WhatsApp', color: '#25833e' },
+        { name: 'CaseZap', color: '#0049bd' }
+      ],
+      templateFeatures: [
+        'Saudacao automatica com menu numerico',
+        'Respostas para planos e atendimento humano',
+        'Compatibilidade inicial com WhatsApp, CaseZap e Telegram'
+      ],
+      attributes: {
+        channels: ['whatsapp', 'casezap', 'telegram']
+      },
+      intentsCount: 5
+    }
+  ];
+
+  var state = {
+    templates: [],
+    filtered: [],
+    detailById: {},
+    query: '',
+    channel: 'all',
+    category: 'all',
+    selectedId: new URLSearchParams(window.location.search).get('template') || null,
+    apiNotice: ''
+  };
+
+  var els = {};
+
+  document.addEventListener('DOMContentLoaded', function () {
+    els.status = document.getElementById('templates-status');
+    els.search = document.getElementById('template-search');
+    els.grid = document.getElementById('templates-grid');
+    els.detail = document.getElementById('template-detail');
+    els.resultCount = document.getElementById('result-count');
+    els.channelFilters = document.getElementById('channel-filters');
+    els.categoryFilters = document.getElementById('category-filters');
+    els.summaryTotal = document.getElementById('summary-total');
+    els.summaryChannels = document.getElementById('summary-channels');
+    els.summaryCertified = document.getElementById('summary-certified');
+
+    els.search.addEventListener('input', function (event) {
+      state.query = event.target.value.trim().toLowerCase();
+      applyFilters();
+    });
+
+    loadTemplates();
+  });
+
+  function fetchJson(url) {
+    return fetch(url, {
+      headers: {
+        Accept: 'application/json'
+      },
+      credentials: 'same-origin'
+    }).then(function (response) {
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+
+      return response.json();
+    });
+  }
+
+  function normalizeListPayload(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return [];
+    }
+
+    return payload.templates || payload.chatbots || payload.data || payload.results || [];
+  }
+
+  function unique(values) {
+    var seen = {};
+    return values.filter(function (value) {
+      var key = String(value || '').trim().toLowerCase();
+      if (!key || seen[key]) {
+        return false;
+      }
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function titleCase(value) {
+    return String(value || '')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, function (letter) {
+        return letter.toUpperCase();
+      });
+  }
+
+  function labelFor(value) {
+    var key = String(value || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    return LABELS[key] || titleCase(value);
+  }
+
+  function textOnly(value) {
+    var div = document.createElement('div');
+    div.innerHTML = String(value || '');
+    return div.textContent.replace(/\s+/g, ' ').trim();
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function normalizeTemplate(item) {
+    var id = String(item._id || item.id || item.bot_id || item.uid || '').trim();
+    var certifiedTags = Array.isArray(item.certifiedTags) ? item.certifiedTags : [];
+    var rawTags = Array.isArray(item.tags) ? item.tags : [];
+    var explicitChannels = item.attributes && Array.isArray(item.attributes.channels) ? item.attributes.channels : [];
+    var certifiedTagNames = certifiedTags.map(function (tag) { return tag && tag.name; });
+    var channelCandidates = explicitChannels.concat(certifiedTagNames).concat(rawTags.filter(function (tag) {
+      return KNOWN_CHANNELS.indexOf(String(tag || '').trim().toLowerCase()) !== -1;
+    }));
+    var channels = unique(channelCandidates)
+      .map(function (tag) {
+        return String(tag).trim();
+      });
+    var tags = unique(rawTags.concat(certifiedTagNames));
+    var title = item.title || item.name || 'Modelo ChatCase';
+    var description = textOnly(item.shortDescription || item.short_description || item.description || '');
+    var fullDescription = textOnly(item.description || item.short_description || item.shortDescription || '');
+    var features = Array.isArray(item.templateFeatures) ? item.templateFeatures : [];
+    var intentsCount = Array.isArray(item.intents) ? item.intents.length : Number(item.intentsCount || item.intents_count || 0);
+
+    return {
+      id: id,
+      name: title,
+      rawName: item.name || title,
+      description: description || 'Modelo pronto para acelerar a configuracao do atendimento.',
+      fullDescription: fullDescription || description || 'Modelo pronto para acelerar a configuracao do atendimento.',
+      category: item.mainCategory || item.category || 'Atendimento',
+      language: item.language || item.lang || 'pt',
+      image: item.bigImage || item.image || item.photoUrl || '/dashboard/assets/img/logos/chatcase-logo.svg',
+      channels: channels.length ? channels : ['atendimento'],
+      tags: tags.length ? tags : channels,
+      certified: item.certified === true,
+      type: item.type || 'template',
+      subtype: item.subtype || '',
+      features: features.length ? features : buildFeatures(item, intentsCount),
+      intentsCount: intentsCount,
+      source: item
+    };
+  }
+
+  function buildFeatures(item, intentsCount) {
+    var features = [];
+
+    if (intentsCount) {
+      features.push(intentsCount + ' intents de automacao importaveis');
+    }
+
+    if (item.attributes && Array.isArray(item.attributes.channels)) {
+      features.push('Canais suportados: ' + item.attributes.channels.map(titleCase).join(', '));
+    }
+
+    features.push('Pronto para editar no construtor visual');
+    return features;
+  }
+
+  function loadTemplates() {
+    setStatus('Carregando modelos publicos...');
+
+    fetchJson(ENDPOINTS.templates)
+      .then(function (payload) {
+        var list = normalizeListPayload(payload);
+        if (!list.length) {
+          return fetchJson(ENDPOINTS.community).then(normalizeListPayload);
+        }
+
+        return list;
+      })
+      .then(function (list) {
+        state.templates = list.map(normalizeTemplate).filter(function (template) {
+          return template.id;
+        });
+
+        if (!state.templates.length) {
+          throw new Error('Lista vazia');
+        }
+
+        state.apiNotice = '';
+        completeLoad();
+      })
+      .catch(function () {
+        state.templates = fallbackTemplates.map(normalizeTemplate);
+        state.apiNotice = 'API local indisponivel; exibindo modelo base ChatCase.';
+        completeLoad();
+      });
+  }
+
+  function completeLoad() {
+    if (!state.selectedId || !findTemplate(state.selectedId)) {
+      state.selectedId = state.templates[0] && state.templates[0].id;
+    }
+
+    renderFilters();
+    applyFilters();
+    updateSummary();
+
+    if (state.selectedId) {
+      hydrateDetail(state.selectedId);
+    }
+  }
+
+  function setStatus(message) {
+    els.status.textContent = message;
+  }
+
+  function getChannelOptions() {
+    var channels = [];
+    state.templates.forEach(function (template) {
+      channels = channels.concat(template.channels);
+    });
+
+    return unique(channels).map(labelFor).sort();
+  }
+
+  function getCategoryOptions() {
+    return unique(state.templates.map(function (template) {
+      return template.category;
+    })).map(labelFor).sort();
+  }
+
+  function renderFilters() {
+    renderFilterGroup(els.channelFilters, 'channel', ['Todos'].concat(getChannelOptions()));
+    renderFilterGroup(els.categoryFilters, 'category', ['Todas categorias'].concat(getCategoryOptions()));
+  }
+
+  function renderFilterGroup(container, key, options) {
+    container.innerHTML = options.map(function (option, index) {
+      var value = index === 0 ? 'all' : option.toLowerCase();
+      var pressed = state[key] === value;
+      return '<button type="button" class="filter-chip" data-filter="' + key + '" data-value="' + escapeHtml(value) + '" aria-pressed="' + pressed + '">' + escapeHtml(option) + '</button>';
+    }).join('');
+
+    container.querySelectorAll('button').forEach(function (button) {
+      button.addEventListener('click', function () {
+        state[key] = button.getAttribute('data-value');
+        renderFilters();
+        applyFilters();
+      });
+    });
+  }
+
+  function matchesTemplate(template) {
+    var query = state.query;
+    var haystack = [
+      template.name,
+      template.description,
+      template.category,
+      template.language,
+      template.channels.join(' ')
+    ].join(' ').toLowerCase();
+    var channelMatch = state.channel === 'all' || template.channels.some(function (channel) {
+      return labelFor(channel).toLowerCase() === state.channel;
+    });
+    var categoryMatch = state.category === 'all' || labelFor(template.category).toLowerCase() === state.category;
+    var queryMatch = !query || haystack.indexOf(query) !== -1;
+
+    return channelMatch && categoryMatch && queryMatch;
+  }
+
+  function applyFilters() {
+    state.filtered = state.templates.filter(matchesTemplate);
+
+    if (!state.filtered.some(function (template) { return template.id === state.selectedId; }) && state.filtered[0]) {
+      state.selectedId = state.filtered[0].id;
+      hydrateDetail(state.selectedId);
+    }
+
+    renderGrid();
+    renderDetail();
+    setStatus(state.apiNotice || 'Modelos carregados da API publica do ChatCase.');
+  }
+
+  function renderGrid() {
+    els.resultCount.textContent = state.filtered.length + ' modelo(s) encontrado(s)';
+
+    if (!state.filtered.length) {
+      els.grid.innerHTML = '<div class="empty-state">Nenhum modelo encontrado para os filtros atuais.</div>';
+      return;
+    }
+
+    els.grid.innerHTML = state.filtered.map(function (template) {
+      var cardTags = unique(template.channels.concat(template.tags || [])).slice(0, 4);
+      var tags = cardTags.map(function (tag, index) {
+        var variant = index === 0 ? ' is-green' : index === 1 ? ' is-orange' : '';
+        return '<span class="tag' + variant + '">' + escapeHtml(labelFor(tag)) + '</span>';
+      }).join('');
+      var selected = template.id === state.selectedId ? ' is-selected' : '';
+      var certified = template.certified ? '<span class="certified-mark">OK</span>' : '';
+
+      return '' +
+        '<button type="button" class="template-card' + selected + '" data-template-id="' + escapeHtml(template.id) + '">' +
+          '<span class="template-media"><img src="' + escapeHtml(template.image) + '" alt=""></span>' +
+          '<span class="template-title-row"><h3>' + escapeHtml(template.name) + '</h3>' + certified + '</span>' +
+          '<p>' + escapeHtml(template.description) + '</p>' +
+          '<span class="tag-list">' + tags + '</span>' +
+        '</button>';
+    }).join('');
+
+    els.grid.querySelectorAll('[data-template-id]').forEach(function (card) {
+      card.addEventListener('click', function () {
+        selectTemplate(card.getAttribute('data-template-id'));
+      });
+    });
+  }
+
+  function selectTemplate(id) {
+    state.selectedId = id;
+    var url = new URL(window.location.href);
+    url.searchParams.set('template', id);
+    window.history.replaceState({}, '', url.toString());
+    hydrateDetail(id);
+    renderGrid();
+    renderDetail();
+  }
+
+  function findTemplate(id) {
+    return state.templates.find(function (template) {
+      return template.id === id;
+    });
+  }
+
+  function hydrateDetail(id) {
+    if (state.detailById[id]) {
+      return;
+    }
+
+    fetchJson(ENDPOINTS.templates + '/' + encodeURIComponent(id))
+      .then(function (payload) {
+        state.detailById[id] = normalizeTemplate(Object.assign({}, findTemplate(id) ? findTemplate(id).source : {}, payload, { _id: id }));
+        renderDetail();
+      })
+      .catch(function () {
+        state.detailById[id] = findTemplate(id);
+        renderDetail();
+      });
+  }
+
+  function renderDetail() {
+    var template = state.detailById[state.selectedId] || findTemplate(state.selectedId);
+
+    if (!template) {
+      els.detail.innerHTML = '<div class="detail-empty"><strong>Selecione um modelo</strong><span>Os detalhes e a acao de importacao aparecem aqui.</span></div>';
+      return;
+    }
+
+    var featureItems = template.features.slice(0, 5).map(function (feature) {
+      return '<li>' + escapeHtml(feature) + '</li>';
+    }).join('');
+    var tags = template.channels.map(function (channel) {
+      return '<span class="tag">' + escapeHtml(labelFor(channel)) + '</span>';
+    }).join('');
+    var signupHref = '/dashboard/#/signup?template=' + encodeURIComponent(template.id);
+    var dashboardHref = '/dashboard/#/login?template=' + encodeURIComponent(template.id);
+
+    els.detail.innerHTML = '' +
+      '<div class="detail-cover"><img src="' + escapeHtml(template.image) + '" alt=""></div>' +
+      '<div class="detail-body">' +
+        '<div>' +
+          '<h3>' + escapeHtml(template.name) + '</h3>' +
+          '<p class="detail-description">' + escapeHtml(template.fullDescription) + '</p>' +
+        '</div>' +
+        '<div class="tag-list">' + tags + '</div>' +
+        '<div class="detail-meta">' +
+          '<div><strong>' + escapeHtml(labelFor(template.category)) + '</strong><span>Categoria</span></div>' +
+          '<div><strong>' + escapeHtml(template.intentsCount || '-') + '</strong><span>Intents</span></div>' +
+          '<div><strong>' + escapeHtml(template.language.toUpperCase()) + '</strong><span>Idioma</span></div>' +
+          '<div><strong>' + escapeHtml(template.certified ? 'Sim' : 'Nao') + '</strong><span>Certificado</span></div>' +
+        '</div>' +
+        '<ul class="feature-list">' + featureItems + '</ul>' +
+        '<div class="detail-actions">' +
+          '<a class="button button-primary" href="' + signupHref + '">Usar modelo</a>' +
+          '<a class="button" href="' + dashboardHref + '">Entrar no dashboard</a>' +
+          '<button type="button" class="button" data-copy-link="' + escapeHtml(template.id) + '">Copiar link publico</button>' +
+        '</div>' +
+      '</div>';
+
+    var copyButton = els.detail.querySelector('[data-copy-link]');
+    copyButton.addEventListener('click', function () {
+      copyPublicLink(template.id, copyButton);
+    });
+  }
+
+  function copyPublicLink(id, button) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('template', id);
+    var value = url.toString();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(function () {
+        button.textContent = 'Link copiado';
+      });
+      return;
+    }
+
+    window.prompt('Copie o link publico:', value);
+  }
+
+  function updateSummary() {
+    var channels = getChannelOptions();
+    var certified = state.templates.filter(function (template) {
+      return template.certified;
+    }).length;
+
+    els.summaryTotal.textContent = state.templates.length;
+    els.summaryChannels.textContent = channels.length;
+    els.summaryCertified.textContent = certified;
+  }
+}());

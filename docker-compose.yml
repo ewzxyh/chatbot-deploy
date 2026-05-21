@@ -440,6 +440,7 @@ services:
     container_name: tiledesk-docker-proxy
     volumes:
       - ./proxy-nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./public/community:/usr/share/nginx/html/community:ro
     ports:
       - "${PROXY_HTTP_BIND:-8081}:80"
     depends_on:
