@@ -246,9 +246,24 @@ function main() {
     'PRIVACY_CONVERSATION_RETENTION_DAYS',
     'PRIVACY_ATTACHMENT_RETENTION_DAYS',
     'PRIVACY_LEAD_RETENTION_DAYS',
+    'PRIVACY_RETENTION_BATCH_LIMIT',
+    'PRIVACY_RETENTION_ATTACHMENT_BATCH_LIMIT',
+    'PRIVACY_RETENTION_JOB_INTERVAL_HOURS',
+    'PRIVACY_RETENTION_JOB_START_DELAY_SECONDS',
     'PRIVACY_EXPORT_MAX_REQUESTS',
     'PRIVACY_EXPORT_MAX_MESSAGES',
   ].forEach((key) => assertPositiveInteger(env, key, errors));
+
+  [
+    'PRIVACY_RETENTION_DELETE_ATTACHMENTS',
+    'PRIVACY_RETENTION_JOB_ENABLED',
+    'PRIVACY_RETENTION_JOB_DRY_RUN',
+    'PRIVACY_ANONYMIZE_MESSAGE_TEXT',
+  ].forEach((key) => {
+    if (env[key] && !['true', 'false'].includes(env[key])) {
+      errors.push(`${key} must be true or false`);
+    }
+  });
 
   if (env.OPERATIONAL_ALERT_MIN_SEVERITY &&
       !['info', 'warning', 'critical'].includes(env.OPERATIONAL_ALERT_MIN_SEVERITY)) {
