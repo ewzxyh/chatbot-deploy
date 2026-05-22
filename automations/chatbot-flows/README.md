@@ -59,13 +59,16 @@ node scripts\test-chatbot-flow-import-api.js
 
 O projeto temporario e removido ao fim do teste. Use `--keep-project` se quiser inspecionar o bot no dashboard.
 
-## Template visivel na galeria
+## Templates visiveis na galeria
 
-O mesmo fluxo tambem e publicado pelo `tiledesk-server` como template certificado:
+O `tiledesk-server` publica uma biblioteca inicial de templates certificados ChatCase:
 
 - ID: `chatcase-whatsapp-menu-basic`;
+- ID: `chatcase-ecommerce-orders`;
+- ID: `chatcase-clinic-scheduling`;
 - rota de lista: `/api/modules/templates/public/templates`;
-- rota de detalhe: `/api/modules/templates/public/templates/chatcase-whatsapp-menu-basic`;
+- rota de detalhe: `/api/modules/templates/public/templates/<template-id>`;
+- rota de exportacao JSON: `/api/modules/templates/public/templates/<template-id>/export`;
 - importacao no dashboard: usa a rota oficial `faq_kb/fork` com `public=true`.
 
 Para validar a galeria e a importacao por template contra a stack local:
@@ -74,4 +77,4 @@ Para validar a galeria e a importacao por template contra a stack local:
 node scripts\test-chatbot-template-gallery-api.js
 ```
 
-O teste cria um usuario/projeto temporario, confirma que o template aparece na galeria, importa o template por `fork` e verifica se os 5 intents foram persistidos.
+O teste cria um usuario/projeto temporario, confirma que os templates aparecem na galeria, valida detalhe/exportacao, importa cada template por `fork` e verifica se os intents foram persistidos.

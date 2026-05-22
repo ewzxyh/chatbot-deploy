@@ -16,6 +16,12 @@
     email: 'E-mail',
     widget: 'Widget',
     atendimento: 'Atendimento',
+    ecommerce: 'E-commerce',
+    pedidos: 'Pedidos',
+    vendas: 'Vendas',
+    clinica: 'Clinica',
+    agendamento: 'Agendamento',
+    recepcao: 'Recepcao',
     'customer satisfaction': 'Satisfacao do cliente',
     'increase sales': 'Aumentar vendas'
   };
@@ -49,6 +55,62 @@
         channels: ['whatsapp', 'casezap', 'telegram']
       },
       intentsCount: 5
+    },
+    {
+      _id: 'chatcase-ecommerce-orders',
+      certified: true,
+      public: true,
+      language: 'pt',
+      name: 'ChatCase Loja online e pedidos',
+      title: 'Loja online e pedidos',
+      description: 'Fluxo pronto para lojas que recebem perguntas de WhatsApp sobre pedido, entrega, trocas e atendimento humano.',
+      short_description: 'Menu para e-commerce com status de pedido, trocas/devolucoes e handoff para atendente.',
+      type: 'tilebot',
+      subtype: 'chatbot',
+      mainCategory: 'Increase Sales',
+      bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
+      tags: ['whatsapp', 'casezap', 'ecommerce', 'pedidos', 'vendas'],
+      certifiedTags: [
+        { name: 'WhatsApp', color: '#25833e' },
+        { name: 'CaseZap', color: '#0049bd' }
+      ],
+      templateFeatures: [
+        'Triagem de status de pedido e entrega',
+        'Orientacao para trocas e devolucoes',
+        'Handoff quando o cliente precisa de atendimento humano'
+      ],
+      attributes: {
+        channels: ['whatsapp', 'casezap']
+      },
+      intentsCount: 6
+    },
+    {
+      _id: 'chatcase-clinic-scheduling',
+      certified: true,
+      public: true,
+      language: 'pt',
+      name: 'ChatCase Clinica e agendamentos',
+      title: 'Clinica e agendamentos',
+      description: 'Fluxo para clinicas, consultorios e servicos com triagem inicial, agendamento, informacoes de valores/convenios e atendimento humano.',
+      short_description: 'Menu para agendamento, valores/convenios e encaminhamento para recepcao.',
+      type: 'tilebot',
+      subtype: 'chatbot',
+      mainCategory: 'Customer Satisfaction',
+      bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
+      tags: ['whatsapp', 'casezap', 'clinica', 'agendamento', 'recepcao'],
+      certifiedTags: [
+        { name: 'WhatsApp', color: '#25833e' },
+        { name: 'CaseZap', color: '#0049bd' }
+      ],
+      templateFeatures: [
+        'Coleta inicial de disponibilidade para agendamento',
+        'Resposta guiada sobre valores e convenios',
+        'Encaminhamento para recepcao quando precisar'
+      ],
+      attributes: {
+        channels: ['whatsapp', 'casezap']
+      },
+      intentsCount: 6
     }
   ];
 
@@ -235,7 +297,7 @@
       })
       .catch(function () {
         state.templates = fallbackTemplates.map(normalizeTemplate);
-        state.apiNotice = 'API local indisponivel; exibindo modelo base ChatCase.';
+        state.apiNotice = 'API local indisponivel; exibindo modelos base ChatCase.';
         completeLoad();
       });
   }
@@ -406,6 +468,7 @@
     }).join('');
     var signupHref = '/dashboard/#/signup?template=' + encodeURIComponent(template.id);
     var dashboardHref = '/dashboard/#/login?template=' + encodeURIComponent(template.id);
+    var exportHref = ENDPOINTS.templates + '/' + encodeURIComponent(template.id) + '/export';
 
     els.detail.innerHTML = '' +
       '<div class="detail-cover"><img src="' + escapeHtml(template.image) + '" alt=""></div>' +
@@ -425,6 +488,7 @@
         '<div class="detail-actions">' +
           '<a class="button button-primary" href="' + signupHref + '">Usar modelo</a>' +
           '<a class="button" href="' + dashboardHref + '">Entrar no dashboard</a>' +
+          '<a class="button" href="' + exportHref + '">Baixar JSON</a>' +
           '<button type="button" class="button" data-copy-link="' + escapeHtml(template.id) + '">Copiar link publico</button>' +
         '</div>' +
       '</div>';

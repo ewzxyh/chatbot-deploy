@@ -37,6 +37,9 @@ assert(!/https?:\/\/fonts\./i.test(html + css + js), 'Community page should not 
 assert(js.includes('/api/modules/templates/public/templates'), 'JS should consume public templates API');
 assert(js.includes('/api/modules/templates/public/community'), 'JS should keep community API fallback');
 assert(js.includes('template='), 'JS should support public template query links');
+assert(js.includes('chatcase-ecommerce-orders'), 'JS fallback should include ecommerce template');
+assert(js.includes('chatcase-clinic-scheduling'), 'JS fallback should include clinic template');
+assert(js.includes('/export'), 'JS should expose template JSON export links');
 assert(nginx.includes('location /community/'), 'Nginx should serve /community/');
 assert(nginx.includes('try_files $uri $uri/ /community/index.html'), 'Nginx should fallback to community index');
 assert(nginx.includes("script-src 'self'"), 'Nginx CSP should avoid unsafe inline scripts for community');

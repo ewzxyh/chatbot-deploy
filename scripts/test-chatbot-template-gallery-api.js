@@ -4,8 +4,37 @@ const assert = require('assert');
 const http = require('http');
 const https = require('https');
 
-const TEMPLATE_ID = 'chatcase-whatsapp-menu-basic';
-const EXPECTED_INTENTS = ['defaultFallback', 'start', 'menu', 'plans', 'human_handoff'];
+const EXPECTED_TEMPLATES = [
+  {
+    id: 'chatcase-whatsapp-menu-basic',
+    intents: ['defaultFallback', 'start', 'menu', 'plans', 'human_handoff'],
+    questions: {
+      start: '\\start',
+      plans: '1',
+      human_handoff: '2'
+    }
+  },
+  {
+    id: 'chatcase-ecommerce-orders',
+    intents: ['defaultFallback', 'start', 'menu', 'order_status', 'exchange_return', 'human_handoff'],
+    questions: {
+      start: '\\start',
+      order_status: '1',
+      exchange_return: '2',
+      human_handoff: '3'
+    }
+  },
+  {
+    id: 'chatcase-clinic-scheduling',
+    intents: ['defaultFallback', 'start', 'menu', 'schedule', 'prices', 'human_handoff'],
+    questions: {
+      start: '\\start',
+      schedule: '1',
+      prices: '2',
+      human_handoff: '3'
+    }
+  }
+];
 
 function parseArgs(argv) {
   const args = {};
@@ -136,7 +165,7 @@ async function run() {
 
   try {
     /*
-     * AC: O template ChatCase precisa aparecer na galeria publica e ser importavel pela rota oficial.
+     * AC: Os templates oficiais ChatCase precisam aparecer na galeria publica e ser importaveis pela rota oficial.
      * Behavior: lista publica -> detalhe publico -> fork em projeto temporario -> intents persistidos.
      * @category: service-integration-e2e
      * @lane: service-integration-e2e
@@ -148,25 +177,43 @@ async function run() {
     });
 
     assert(Array.isArray(templates), 'template list should be an array');
-    const template = templates.find((item) => item._id === TEMPLATE_ID);
-    assert(template, `template ${TEMPLATE_ID} should be listed`);
-    assert.strictEqual(template.type, 'tilebot');
-    assert.strictEqual(template.subtype, 'chatbot');
-    assert.strictEqual(template.public, true);
-    assert.strictEqual(template.certified, true);
+    const detailByTemplateId = new Map();
 
-    const detail = await requestJson({
-      method: 'GET',
-      url: `${baseUrl}${apiPrefix}/modules/templates/public/templates/${encodeURIComponent(TEMPLATE_ID)}`
-    });
+    for (const expected of EXPECTED_TEMPLATES) {
+      const template = templates.find((item) => item._id === expected.id);
+      assert(template, `template ${expected.id} should be listed`);
+      assert.strictEqual(template.type, 'tilebot');
+      assert.strictEqual(template.subtype, 'chatbot');
+      assert.strictEqual(template.public, true);
+      assert.strictEqual(template.certified, true);
+      assert(template.intentsCount >= expected.intents.length, `template ${expected.id} should report intentsCount`);
+      assert(template.attributes && Array.isArray(template.attributes.channels), `template ${expected.id} should expose channels`);
+      assert(template.attributes.channels.includes('whatsapp'), `template ${expected.id} should support WhatsApp`);
+      assert(template.attributes.channels.includes('casezap'), `template ${expected.id} should support CaseZap`);
 
-    assert.strictEqual(detail.name, template.name);
-    assert.strictEqual(detail.type, 'tilebot');
-    assert.strictEqual(detail.subtype, 'chatbot');
-    assert(Array.isArray(detail.intents), 'template detail should include intents');
-    EXPECTED_INTENTS.forEach((name) => {
-      assert(detail.intents.some((intent) => intent.intent_display_name === name), `template intent ${name} should exist`);
-    });
+      const detail = await requestJson({
+        method: 'GET',
+        url: `${baseUrl}${apiPrefix}/modules/templates/public/templates/${encodeURIComponent(expected.id)}`
+      });
+
+      assert.strictEqual(detail.name, template.name);
+      assert.strictEqual(detail.type, 'tilebot');
+      assert.strictEqual(detail.subtype, 'chatbot');
+      assert(Array.isArray(detail.intents), `template detail ${expected.id} should include intents`);
+      expected.intents.forEach((name) => {
+        assert(detail.intents.some((intent) => intent.intent_display_name === name), `template ${expected.id} intent ${name} should exist`);
+      });
+
+      const exported = await requestJson({
+        method: 'GET',
+        url: `${baseUrl}${apiPrefix}/modules/templates/public/templates/${encodeURIComponent(expected.id)}/export`
+      });
+      assert.strictEqual(exported._id, expected.id);
+      assert.strictEqual(exported.source, 'chatcase-template-export');
+      assert(Array.isArray(exported.intents), `template export ${expected.id} should include intents`);
+
+      detailByTemplateId.set(expected.id, detail);
+    }
 
     const signup = await requestJson({
       method: 'POST',
@@ -194,40 +241,47 @@ async function run() {
     projectId = project._id;
     assert(projectId, 'project id should be returned');
 
-    const fork = await requestJson({
-      method: 'POST',
-      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(TEMPLATE_ID)}?public=true&projectid=${encodeURIComponent(projectId)}`,
-      auth
-    });
+    const imported = [];
 
-    assert(fork.bot_id, 'fork should return bot id');
+    for (const expected of EXPECTED_TEMPLATES) {
+      const detail = detailByTemplateId.get(expected.id);
+      const fork = await requestJson({
+        method: 'POST',
+        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(expected.id)}?public=true&projectid=${encodeURIComponent(projectId)}`,
+        auth
+      });
 
-    const persistedBot = await requestJson({
-      method: 'GET',
-      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/${encodeURIComponent(fork.bot_id)}`,
-      auth
-    });
+      assert(fork.bot_id, `fork ${expected.id} should return bot id`);
 
-    assert.strictEqual(persistedBot.name, detail.name);
-    assert.strictEqual(persistedBot.type, 'tilebot');
-    assert.strictEqual(persistedBot.subtype, 'chatbot');
+      const persistedBot = await requestJson({
+        method: 'GET',
+        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/${encodeURIComponent(fork.bot_id)}`,
+        auth
+      });
 
-    const intents = await requestJson({
-      method: 'GET',
-      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq?id_faq_kb=${encodeURIComponent(fork.bot_id)}`,
-      auth
-    });
+      assert.strictEqual(persistedBot.name, detail.name);
+      assert.strictEqual(persistedBot.type, 'tilebot');
+      assert.strictEqual(persistedBot.subtype, 'chatbot');
 
-    const byName = new Map(intents.map((intent) => [intent.intent_display_name, intent]));
-    EXPECTED_INTENTS.forEach((name) => {
-      assert(byName.has(name), `persisted intent ${name} should exist`);
-    });
+      const intents = await requestJson({
+        method: 'GET',
+        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq?id_faq_kb=${encodeURIComponent(fork.bot_id)}`,
+        auth
+      });
 
-    assert.strictEqual(byName.get('start').question, '\\start');
-    assert.strictEqual(byName.get('plans').question, '1');
-    assert.strictEqual(byName.get('human_handoff').question, '2');
+      const byName = new Map(intents.map((intent) => [intent.intent_display_name, intent]));
+      expected.intents.forEach((name) => {
+        assert(byName.has(name), `persisted template ${expected.id} intent ${name} should exist`);
+      });
 
-    console.log(`OK chatbot template gallery api: template=${TEMPLATE_ID} project=${projectId} bot=${fork.bot_id} intents=${intents.length}`);
+      Object.keys(expected.questions).forEach((name) => {
+        assert.strictEqual(byName.get(name).question, expected.questions[name], `persisted template ${expected.id} question ${name}`);
+      });
+
+      imported.push(`${expected.id}:${fork.bot_id}:${intents.length}`);
+    }
+
+    console.log(`OK chatbot template gallery api: project=${projectId} imported=${imported.join(',')}`);
   } finally {
     if (!args['keep-project']) {
       await cleanupProject({ baseUrl, apiPrefix, projectId, auth });
