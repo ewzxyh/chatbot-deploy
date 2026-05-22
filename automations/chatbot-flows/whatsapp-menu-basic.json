@@ -12,6 +12,10 @@
       "casezap",
       "telegram"
     ],
+    "nativeInteractions": {
+      "whatsapp": "buttons",
+      "casezap": "menu"
+    },
     "rules": []
   },
   "intents": [
@@ -72,7 +76,24 @@
                 "type": "message",
                 "message": {
                   "type": "text",
-                  "text": "Ola! Sou o assistente ChatCase.\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2."
+                  "text": "Ola! Sou o assistente ChatCase.\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2.",
+                  "attributes": {
+                    "attachment": {
+                      "type": "text",
+                      "buttons": [
+                        {
+                          "type": "text",
+                          "value": "Ver planos",
+                          "label": "Ver planos"
+                        },
+                        {
+                          "type": "text",
+                          "value": "Falar atendente",
+                          "label": "Falar atendente"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             ]
@@ -108,7 +129,24 @@
                 "type": "message",
                 "message": {
                   "type": "text",
-                  "text": "Menu ChatCase:\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2."
+                  "text": "Menu ChatCase:\n\n1 - Ver planos\n2 - Falar com atendente\n\nResponda com 1 ou 2.",
+                  "attributes": {
+                    "attachment": {
+                      "type": "text",
+                      "buttons": [
+                        {
+                          "type": "text",
+                          "value": "Ver planos",
+                          "label": "Ver planos"
+                        },
+                        {
+                          "type": "text",
+                          "value": "Falar atendente",
+                          "label": "Falar atendente"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             ]
@@ -144,7 +182,24 @@
                 "type": "message",
                 "message": {
                   "type": "text",
-                  "text": "Planos ChatCase:\n\n- Starter: atendimento basico e canais essenciais.\n- Business: automacoes, equipe e integracoes avancadas.\n\nDigite 2 para falar com uma atendente ou menu para voltar."
+                  "text": "Planos ChatCase:\n\n- Starter: atendimento basico e canais essenciais.\n- Business: automacoes, equipe e integracoes avancadas.\n\nDigite 2 para falar com uma atendente ou menu para voltar.",
+                  "attributes": {
+                    "attachment": {
+                      "type": "text",
+                      "buttons": [
+                        {
+                          "type": "text",
+                          "value": "Falar atendente",
+                          "label": "Falar atendente"
+                        },
+                        {
+                          "type": "text",
+                          "value": "Menu",
+                          "label": "Menu"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             ]
@@ -152,6 +207,9 @@
         }
       ],
       "attributes": {
+        "aliases": [
+          "Ver planos"
+        ],
         "position": {
           "x": 460,
           "y": 360
@@ -188,6 +246,10 @@
         }
       ],
       "attributes": {
+        "aliases": [
+          "Falar atendente",
+          "Atendente"
+        ],
         "position": {
           "x": 760,
           "y": 360

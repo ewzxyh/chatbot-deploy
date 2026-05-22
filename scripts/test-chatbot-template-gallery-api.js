@@ -12,6 +12,15 @@ const EXPECTED_TEMPLATES = [
       start: '\\start',
       plans: '1',
       human_handoff: '2'
+    },
+    buttons: {
+      start: ['Ver planos', 'Falar atendente'],
+      menu: ['Ver planos', 'Falar atendente'],
+      plans: ['Falar atendente', 'Menu']
+    },
+    aliases: {
+      plans: ['Ver planos'],
+      human_handoff: ['Falar atendente', 'Atendente']
     }
   },
   {
@@ -22,6 +31,15 @@ const EXPECTED_TEMPLATES = [
       order_status: '1',
       exchange_return: '2',
       human_handoff: '3'
+    },
+    buttons: {
+      start: ['Status pedido', 'Trocas', 'Atendente'],
+      menu: ['Status pedido', 'Trocas', 'Atendente']
+    },
+    aliases: {
+      order_status: ['Status pedido', 'Pedido', 'Entrega'],
+      exchange_return: ['Trocas', 'Devolucao', 'Trocas ou devolucoes'],
+      human_handoff: ['Atendente', 'Falar com atendente']
     }
   },
   {
@@ -32,6 +50,15 @@ const EXPECTED_TEMPLATES = [
       schedule: '1',
       prices: '2',
       human_handoff: '3'
+    },
+    buttons: {
+      start: ['Agendar', 'Valores', 'Recepcao'],
+      menu: ['Agendar', 'Valores', 'Recepcao']
+    },
+    aliases: {
+      schedule: ['Agendar', 'Agendar horario'],
+      prices: ['Valores', 'Convenios', 'Valores e convenios'],
+      human_handoff: ['Recepcao', 'Falar com recepcao']
     }
   }
 ];
@@ -151,6 +178,42 @@ async function cleanupProject({ baseUrl, apiPrefix, projectId, auth }) {
   }
 }
 
+function getIntentButtons(intent) {
+  const commands = (intent.actions || [])
+    .flatMap((action) => action.attributes && action.attributes.commands || []);
+  const messageCommand = commands.find((command) => command.type === 'message' && command.message);
+  const buttons = messageCommand &&
+    messageCommand.message.attributes &&
+    messageCommand.message.attributes.attachment &&
+    messageCommand.message.attributes.attachment.buttons || [];
+
+  return buttons.map((button) => button.value || button.label || button.title);
+}
+
+function assertNativeInteractions(payload, templateId) {
+  assert.strictEqual(
+    payload.attributes && payload.attributes.nativeInteractions && payload.attributes.nativeInteractions.whatsapp,
+    'buttons',
+    `template ${templateId} should mark WhatsApp native buttons`
+  );
+  assert.strictEqual(
+    payload.attributes && payload.attributes.nativeInteractions && payload.attributes.nativeInteractions.casezap,
+    'menu',
+    `template ${templateId} should mark CaseZap native menu`
+  );
+}
+
+function assertIntentButtons(intent, expectedButtons, label) {
+  assert.deepStrictEqual(getIntentButtons(intent), expectedButtons, `${label} should preserve native buttons`);
+}
+
+function assertIntentAliases(intent, expectedAliases, label) {
+  const aliases = intent.attributes && intent.attributes.aliases || [];
+  expectedAliases.forEach((alias) => {
+    assert(aliases.includes(alias), `${label} should include alias ${alias}`);
+  });
+}
+
 async function run() {
   const args = parseArgs(process.argv);
   const baseUrl = normalizeBaseUrl(args['base-url'] || process.env.CHATCASE_BASE_URL);
@@ -190,6 +253,7 @@ async function run() {
       assert(template.attributes && Array.isArray(template.attributes.channels), `template ${expected.id} should expose channels`);
       assert(template.attributes.channels.includes('whatsapp'), `template ${expected.id} should support WhatsApp`);
       assert(template.attributes.channels.includes('casezap'), `template ${expected.id} should support CaseZap`);
+      assertNativeInteractions(template, expected.id);
 
       const detail = await requestJson({
         method: 'GET',
@@ -203,6 +267,15 @@ async function run() {
       expected.intents.forEach((name) => {
         assert(detail.intents.some((intent) => intent.intent_display_name === name), `template ${expected.id} intent ${name} should exist`);
       });
+      assertNativeInteractions(detail, expected.id);
+
+      const detailByName = new Map(detail.intents.map((intent) => [intent.intent_display_name, intent]));
+      Object.keys(expected.buttons || {}).forEach((name) => {
+        assertIntentButtons(detailByName.get(name), expected.buttons[name], `detail ${expected.id}:${name}`);
+      });
+      Object.keys(expected.aliases || {}).forEach((name) => {
+        assertIntentAliases(detailByName.get(name), expected.aliases[name], `detail ${expected.id}:${name}`);
+      });
 
       const exported = await requestJson({
         method: 'GET',
@@ -211,6 +284,7 @@ async function run() {
       assert.strictEqual(exported._id, expected.id);
       assert.strictEqual(exported.source, 'chatcase-template-export');
       assert(Array.isArray(exported.intents), `template export ${expected.id} should include intents`);
+      assertNativeInteractions(exported, expected.id);
 
       detailByTemplateId.set(expected.id, detail);
     }
@@ -276,6 +350,14 @@ async function run() {
 
       Object.keys(expected.questions).forEach((name) => {
         assert.strictEqual(byName.get(name).question, expected.questions[name], `persisted template ${expected.id} question ${name}`);
+      });
+
+      Object.keys(expected.buttons || {}).forEach((name) => {
+        assertIntentButtons(byName.get(name), expected.buttons[name], `persisted ${expected.id}:${name}`);
+      });
+
+      Object.keys(expected.aliases || {}).forEach((name) => {
+        assertIntentAliases(byName.get(name), expected.aliases[name], `persisted ${expected.id}:${name}`);
       });
 
       imported.push(`${expected.id}:${fork.bot_id}:${intents.length}`);

@@ -105,6 +105,22 @@ function extractReplyText(reply) {
   return actionTexts.join('\n');
 }
 
+function extractMessageCommands(reply) {
+  return (reply && reply.actions || [])
+    .flatMap((action) => action.attributes && action.attributes.commands || [])
+    .filter((command) => command.type === 'message' && command.message);
+}
+
+function extractReplyButtons(reply) {
+  return extractMessageCommands(reply)
+    .flatMap((command) => {
+      const buttons = command.message.attributes &&
+        command.message.attributes.attachment &&
+        command.message.attributes.attachment.buttons || [];
+      return buttons.map((button) => button.value || button.label || button.title);
+    });
+}
+
 function createChatbot(flow) {
   const botId = 'chatcase-whatsapp-menu-basic';
   const dataSource = new MockBotsDataSource(buildBotFixture(flow, botId));
@@ -142,7 +158,7 @@ async function assertReply(chatbot, channel, input, expectedFragments) {
     );
   });
 
-  return text;
+  return reply;
 }
 
 async function run() {
@@ -158,11 +174,12 @@ async function run() {
    * @complexity: medium
    * ROI: 82
    */
-  await assertReply(chatbot, 'whatsapp', '/start', [
+  const startReply = await assertReply(chatbot, 'whatsapp', '/start', [
     'assistente ChatCase',
     '1 - Ver planos',
     '2 - Falar com atendente'
   ]);
+  assert.deepStrictEqual(extractReplyButtons(startReply), ['Ver planos', 'Falar atendente']);
 
   /*
    * AC: O fluxo precisa aceitar opcoes numericas simples para WhatsApp/CaseZap.
@@ -179,6 +196,20 @@ async function run() {
   ]);
 
   /*
+   * AC: O mesmo fluxo precisa aceitar o texto retornado por botoes nativos.
+   * Behavior: Usuario clica "Ver planos" no WhatsApp/CaseZap -> motor resolve alias -> bloco de planos.
+   * @category: integration
+   * @lane: integration
+   * @dependency: tiledesk-tybot-connector
+   * @complexity: medium
+   * ROI: 82
+   */
+  await assertReply(chatbot, 'whatsapp', 'Ver planos', [
+    'Planos ChatCase',
+    'Business'
+  ]);
+
+  /*
    * AC: O fluxo precisa ter uma saida clara para atendimento humano.
    * Behavior: Usuario responde "2" -> bloco de handoff -> orientacao para atendente.
    * @category: integration
@@ -188,6 +219,11 @@ async function run() {
    * ROI: 76
    */
   await assertReply(chatbot, 'casezap', '2', [
+    'chamar uma atendente',
+    'descreva em uma mensagem'
+  ]);
+
+  await assertReply(chatbot, 'casezap', 'Falar atendente', [
     'chamar uma atendente',
     'descreva em uma mensagem'
   ]);

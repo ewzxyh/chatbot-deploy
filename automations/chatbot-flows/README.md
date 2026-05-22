@@ -6,12 +6,12 @@ Este diretorio guarda fluxos de automacao importaveis no Tiledesk/ChatCase.
 
 Fluxo inicial para canais de mensagem como WhatsApp, CaseZap/UAZAPI e Telegram:
 
-- `/start` abre um menu numerico simples;
+- `/start` abre um menu numerico simples com botoes nativos quando o canal suporta;
 - `1` retorna informacoes de planos;
 - `2` orienta encaminhamento para atendente;
 - mensagens desconhecidas caem em `defaultFallback`.
 
-O fluxo usa apenas respostas de texto e numeros porque esse formato funciona de forma previsivel em WhatsApp e canais similares. Botoes/listas nativos do WhatsApp devem entrar depois como uma camada especifica de canal.
+O fluxo preserva texto e numeros como fallback universal, mas tambem carrega `attributes.attachment.buttons`. No WABA esse formato vira mensagem interativa de botoes/lista pelo tradutor WhatsApp; no CaseZap/UAZAPI vira `/send/menu`. Os intents de destino tambem possuem `attributes.aliases`, entao clicar em "Ver planos" resolve o mesmo bloco de digitar `1`.
 
 ## Teste local
 
