@@ -197,6 +197,27 @@ Production must have at least one alert destination configured before `node scri
 
 After deploy, open Superadmin > Operacao and use `Testar notificacao`. A healthy production configuration should return `sent`; `skipped` means no destination is active.
 
+## Billing Lifecycle
+
+The server includes an optional billing lifecycle job for CasePay projects. It can simulate or apply:
+
+- dunning notices while a paid project is overdue;
+- automatic suspension after `BILLING_SUSPEND_AFTER_DAYS`;
+- automatic downgrade to Free after `BILLING_DOWNGRADE_AFTER_DAYS`;
+- owner e-mail notices when `BILLING_LIFECYCLE_EMAIL_ENABLED=true`.
+
+Keep the job disabled and dry-run until CasePay webhooks and SMTP are validated:
+
+```bash
+BILLING_LIFECYCLE_JOB_ENABLED=false
+BILLING_LIFECYCLE_JOB_DRY_RUN=true
+BILLING_SUSPEND_AFTER_DAYS=7
+BILLING_DOWNGRADE_AFTER_DAYS=30
+BILLING_LIFECYCLE_EMAIL_ENABLED=true
+```
+
+Superadmin > Projetos exposes the same sweep as `Simular` and `Executar`. Production should run at least one simulation before enabling the scheduled job.
+
 ## Incident Automation Flow
 
 This repository includes a small webhook automation flow for incident routing:

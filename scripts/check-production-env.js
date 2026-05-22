@@ -252,6 +252,14 @@ function main() {
     'PRIVACY_RETENTION_JOB_START_DELAY_SECONDS',
     'PRIVACY_EXPORT_MAX_REQUESTS',
     'PRIVACY_EXPORT_MAX_MESSAGES',
+    'BILLING_LIFECYCLE_JOB_INTERVAL_HOURS',
+    'BILLING_LIFECYCLE_JOB_START_DELAY_SECONDS',
+    'BILLING_LIFECYCLE_BATCH_LIMIT',
+    'BILLING_GRACE_DAYS',
+    'BILLING_SUSPEND_AFTER_DAYS',
+    'BILLING_DOWNGRADE_AFTER_DAYS',
+    'BILLING_DUNNING_NOTICE_INTERVAL_HOURS',
+    'BILLING_EXPIRING_NOTICE_DAYS',
   ].forEach((key) => assertPositiveInteger(env, key, errors));
 
   [
@@ -259,11 +267,27 @@ function main() {
     'PRIVACY_RETENTION_JOB_ENABLED',
     'PRIVACY_RETENTION_JOB_DRY_RUN',
     'PRIVACY_ANONYMIZE_MESSAGE_TEXT',
+    'BILLING_LIFECYCLE_JOB_ENABLED',
+    'BILLING_LIFECYCLE_JOB_DRY_RUN',
+    'BILLING_LIFECYCLE_EMAIL_ENABLED',
   ].forEach((key) => {
     if (env[key] && !['true', 'false'].includes(env[key])) {
       errors.push(`${key} must be true or false`);
     }
   });
+
+  if (isEnabled(env.BILLING_LIFECYCLE_EMAIL_ENABLED) && env.EMAIL_ENABLED !== 'true') {
+    errors.push('BILLING_LIFECYCLE_EMAIL_ENABLED=true requires EMAIL_ENABLED=true');
+  }
+
+  if (isEnabled(env.BILLING_LIFECYCLE_JOB_ENABLED) && env.BILLING_LIFECYCLE_JOB_DRY_RUN === 'true') {
+    warn.push('BILLING_LIFECYCLE_JOB_ENABLED=true with BILLING_LIFECYCLE_JOB_DRY_RUN=true will only simulate billing changes');
+  }
+
+  if (isEnabled(env.BILLING_LIFECYCLE_JOB_ENABLED) &&
+      (!hasValue(env, 'CASEPAY_API_KEY') || !hasValue(env, 'CASEPAY_CONNECTION_ID') || !hasValue(env, 'CASEPAY_WEBHOOK_SECRET'))) {
+    warn.push('BILLING_LIFECYCLE_JOB_ENABLED=true should only be used after CasePay credentials and webhooks are configured');
+  }
 
   if (env.OPERATIONAL_ALERT_MIN_SEVERITY &&
       !['info', 'warning', 'critical'].includes(env.OPERATIONAL_ALERT_MIN_SEVERITY)) {

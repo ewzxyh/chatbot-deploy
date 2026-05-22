@@ -130,6 +130,17 @@ function baseProductionEnv(overrides = {}) {
     CASEPAY_API_KEY: 'REDACTED_SECRET',
     CASEPAY_CONNECTION_ID: 'CasepayConnectionValue1234567890',
     CASEPAY_WEBHOOK_SECRET: 'REDACTED_SECRET',
+    BILLING_LIFECYCLE_JOB_ENABLED: 'false',
+    BILLING_LIFECYCLE_JOB_DRY_RUN: 'true',
+    BILLING_LIFECYCLE_JOB_INTERVAL_HOURS: '24',
+    BILLING_LIFECYCLE_JOB_START_DELAY_SECONDS: '300',
+    BILLING_LIFECYCLE_BATCH_LIMIT: '100',
+    BILLING_GRACE_DAYS: '3',
+    BILLING_SUSPEND_AFTER_DAYS: '7',
+    BILLING_DOWNGRADE_AFTER_DAYS: '30',
+    BILLING_DUNNING_NOTICE_INTERVAL_HOURS: '24',
+    BILLING_EXPIRING_NOTICE_DAYS: '3',
+    BILLING_LIFECYCLE_EMAIL_ENABLED: 'true',
     MONGO_BACKUP_R2_ENDPOINT: 'https://accountid.r2.cloudflarestorage.com',
     MONGO_BACKUP_R2_BUCKET: 'chatcase-backups',
     MONGO_BACKUP_R2_ACCESS_KEY_ID: 'BackupAccessKeyIdValue1234567890',
@@ -246,6 +257,14 @@ function testCheckerRequiresFinalSecrets() {
   }));
   assert.notStrictEqual(shared.status, 0, 'checker must reject shared JWT secrets');
   assert.match(shared.stdout, /JWT_SECRET_KEY must be different from CHAT21_JWT_SECRET/);
+
+  const badBilling = runChecker(baseProductionEnv({
+    BILLING_LIFECYCLE_JOB_ENABLED: 'maybe',
+    BILLING_SUSPEND_AFTER_DAYS: '0',
+  }));
+  assert.notStrictEqual(badBilling.status, 0, 'checker must reject invalid billing lifecycle settings');
+  assert.match(badBilling.stdout, /BILLING_LIFECYCLE_JOB_ENABLED/);
+  assert.match(badBilling.stdout, /BILLING_SUSPEND_AFTER_DAYS/);
 }
 
 testProxySecurityHeadersAndRateLimit();
