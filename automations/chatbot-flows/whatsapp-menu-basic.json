@@ -154,6 +154,9 @@
         }
       ],
       "attributes": {
+        "aliases": [
+          "Menu"
+        ],
         "position": {
           "x": 460,
           "y": 160

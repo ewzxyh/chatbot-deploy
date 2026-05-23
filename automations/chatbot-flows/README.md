@@ -11,7 +11,7 @@ Fluxo inicial para canais de mensagem como WhatsApp, CaseZap/UAZAPI e Telegram:
 - `2` orienta encaminhamento para atendente;
 - mensagens desconhecidas caem em `defaultFallback`.
 
-O fluxo preserva texto e numeros como fallback universal, mas tambem carrega `attributes.attachment.buttons`. No WABA esse formato vira mensagem interativa de botoes/lista pelo tradutor WhatsApp; no CaseZap/UAZAPI vira `/send/menu`. Os intents de destino tambem possuem `attributes.aliases`, entao clicar em "Ver planos" resolve o mesmo bloco de digitar `1`.
+O fluxo preserva texto e numeros como fallback universal, mas tambem carrega `attributes.attachment.buttons`. No WABA esse formato vira mensagem interativa de botoes/lista pelo tradutor WhatsApp; no CaseZap/UAZAPI vira `/send/menu`. Os intents de destino tambem possuem `attributes.aliases`; no import do ChatCase esses aliases viram perguntas auxiliares persistidas, entao clicar em "Ver planos" resolve o mesmo bloco de digitar `1`.
 
 ## Teste local
 

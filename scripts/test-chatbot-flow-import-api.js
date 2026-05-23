@@ -107,6 +107,35 @@ function requestJson({ method, url, auth, payload }) {
   });
 }
 
+function expectedImportedIntentCount(flow) {
+  const questions = new Set(
+    (flow.intents || [])
+      .map((intent) => typeof intent.question === 'string' ? intent.question.trim() : '')
+      .filter(Boolean)
+  );
+
+  return (flow.intents || []).reduce((count, intent) => {
+    const aliases = intent.attributes && Array.isArray(intent.attributes.aliases)
+      ? intent.attributes.aliases
+      : [];
+    let aliasCount = 0;
+
+    aliases.forEach((alias) => {
+      if (typeof alias !== 'string') {
+        return;
+      }
+      const normalized = alias.trim();
+      if (!normalized || questions.has(normalized)) {
+        return;
+      }
+      questions.add(normalized);
+      aliasCount += 1;
+    });
+
+    return count + 1 + aliasCount;
+  }, 0);
+}
+
 async function cleanupProject({ baseUrl, apiPrefix, projectId, auth }) {
   if (!projectId) {
     return;
@@ -201,13 +230,46 @@ async function run() {
     });
 
     const byName = new Map(intents.map((intent) => [intent.intent_display_name, intent]));
-    ['defaultFallback', 'start', 'menu', 'plans', 'human_handoff'].forEach((name) => {
+    assert.strictEqual(intents.length, expectedImportedIntentCount(flow));
+    ['defaultFallback', 'start', 'menu', 'plans', 'human_handoff', 'menu_alias_menu', 'plans_alias_ver_planos', 'human_handoff_alias_falar_atendente', 'human_handoff_alias_atendente'].forEach((name) => {
       assert(byName.has(name), `intent ${name} should be imported`);
     });
 
     assert.strictEqual(byName.get('start').question, '\\start');
+    assert.strictEqual(byName.get('menu_alias_menu').question, 'Menu');
     assert.strictEqual(byName.get('plans').question, '1');
+    assert.strictEqual(byName.get('plans_alias_ver_planos').question, 'Ver planos');
     assert.strictEqual(byName.get('human_handoff').question, '2');
+    assert.strictEqual(byName.get('human_handoff_alias_falar_atendente').question, 'Falar atendente');
+    assert.strictEqual(byName.get('human_handoff_alias_atendente').question, 'Atendente');
+
+    /*
+     * AC: Atualizar um fluxo existente deve preservar metadados ChatCase usados por canais nativos.
+     * Behavior: importjson/:id com replace/overwrite atualiza attributes.nativeInteractions mesmo com rules vazias.
+     * @category: service-integration-e2e
+     * @lane: service-integration-e2e
+     * @dependency: full-system
+     * @complexity: medium
+     * ROI: 78
+     */
+    const updatedBot = await requestJson({
+      method: 'POST',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/importjson/${encodeURIComponent(bot._id)}?replace=true&overwrite=true`,
+      auth,
+      payload: flow
+    });
+
+    assert.strictEqual(updatedBot._id, bot._id);
+    assert.strictEqual(updatedBot.attributes.nativeInteractions.whatsapp, 'buttons');
+    assert.strictEqual(updatedBot.attributes.nativeInteractions.casezap, 'menu');
+
+    const updatedIntents = await requestJson({
+      method: 'GET',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq?id_faq_kb=${encodeURIComponent(bot._id)}`,
+      auth
+    });
+
+    assert.strictEqual(updatedIntents.length, expectedImportedIntentCount(flow));
 
     console.log(`OK chatbot flow import api: project=${projectId} bot=${bot._id} intents=${intents.length}`);
   } finally {
