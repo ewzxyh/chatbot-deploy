@@ -1,0 +1,8 @@
+# Local override to validate the ChatCase fork of chat21-ionic without changing
+# the base compose image used by production-like runs.
+services:
+  ionic:
+    image: chatcase-chat21-ionic:local
+    build:
+      context: ../chatcase-chat21-ionic
+      dockerfile: Dockerfile
