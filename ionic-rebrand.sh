@@ -3,10 +3,10 @@ set -eu
 
 sed -i 's/Tiledesk - Open Source Live Chat/ChatCase/g' /usr/share/nginx/html/index.html
 sed -i 's/<title>Tiledesk<\/title>/<title>ChatCase<\/title>/g' /usr/share/nginx/html/index.html
-sed -i 's/src="main.js[^"]*"/src="main.js?v=chatcase-20260523-source5"/g' /usr/share/nginx/html/index.html
-sed -i 's/chatcase-pdf-preview.js?v=[^"]*/chatcase-pdf-preview.js?v=chatcase-20260523-source5/g' /usr/share/nginx/html/index.html
+sed -i 's/src="main.js[^"]*"/src="main.js?v=chatcase-20260523-source9"/g' /usr/share/nginx/html/index.html
+sed -i 's/chatcase-pdf-preview.js?v=[^"]*/chatcase-pdf-preview.js?v=chatcase-20260523-source9/g' /usr/share/nginx/html/index.html
 grep -q 'chatcase-pdf-preview.js' /usr/share/nginx/html/index.html || \
-  sed -i 's#</body>#<script src="chatcase-pdf-preview.js?v=chatcase-20260523-source5"></script></body>#' /usr/share/nginx/html/index.html
+  sed -i 's#</body>#<script src="chatcase-pdf-preview.js?v=chatcase-20260523-source9"></script></body>#' /usr/share/nginx/html/index.html
 sed -i 's/href="assets\/icon\/favicon.ico[^"]*"/href="assets\/icon\/favicon.ico?v=chatcase-20260508"/g' /usr/share/nginx/html/index.html
 sed -i 's/href=".\/manifest.json[^"]*"/href=".\/manifest.json?v=chatcase-20260508"/g' /usr/share/nginx/html/index.html
 
