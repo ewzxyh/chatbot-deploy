@@ -3,10 +3,10 @@ set -eu
 
 sed -i 's/Tiledesk - Open Source Live Chat/ChatCase/g' /usr/share/nginx/html/index.html
 sed -i 's/<title>Tiledesk<\/title>/<title>ChatCase<\/title>/g' /usr/share/nginx/html/index.html
-sed -i 's/src="main.js[^"]*"/src="main.js?v=chatcase-20260523-source9"/g' /usr/share/nginx/html/index.html
-sed -i 's/chatcase-pdf-preview.js?v=[^"]*/chatcase-pdf-preview.js?v=chatcase-20260523-source9/g' /usr/share/nginx/html/index.html
+sed -i 's/src="main.js[^"]*"/src="main.js?v=chatcase-20260523-source10"/g' /usr/share/nginx/html/index.html
+sed -i 's/chatcase-pdf-preview.js?v=[^"]*/chatcase-pdf-preview.js?v=chatcase-20260523-source10/g' /usr/share/nginx/html/index.html
 grep -q 'chatcase-pdf-preview.js' /usr/share/nginx/html/index.html || \
-  sed -i 's#</body>#<script src="chatcase-pdf-preview.js?v=chatcase-20260523-source9"></script></body>#' /usr/share/nginx/html/index.html
+  sed -i 's#</body>#<script src="chatcase-pdf-preview.js?v=chatcase-20260523-source10"></script></body>#' /usr/share/nginx/html/index.html
 sed -i 's/href="assets\/icon\/favicon.ico[^"]*"/href="assets\/icon\/favicon.ico?v=chatcase-20260508"/g' /usr/share/nginx/html/index.html
 sed -i 's/href=".\/manifest.json[^"]*"/href=".\/manifest.json?v=chatcase-20260508"/g' /usr/share/nginx/html/index.html
 
@@ -319,7 +319,7 @@ cat > /usr/share/nginx/html/chatcase-pdf-preview.js <<'EOF'
     var toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'chatcase-audio-toggle';
-    toggle.setAttribute('aria-label', 'Reproduzir audio');
+    toggle.setAttribute('aria-label', 'Reproduzir áudio');
     toggle.innerHTML = iconSvg('play');
 
     var range = document.createElement('input');
@@ -341,7 +341,7 @@ cat > /usr/share/nginx/html/chatcase-pdf-preview.js <<'EOF'
 
     var meta = document.createElement('span');
     meta.className = 'chatcase-audio-meta';
-    appendText(meta, 'chatcase-audio-label', payload.ptt ? 'Mensagem de voz' : 'Audio');
+    appendText(meta, 'chatcase-audio-label', payload.ptt ? 'Mensagem de voz' : 'Áudio');
     appendText(meta, 'chatcase-audio-total', payload.duration || formatSeconds(payload.seconds));
     card.appendChild(meta);
     card.appendChild(audio);
@@ -371,11 +371,11 @@ cat > /usr/share/nginx/html/chatcase-pdf-preview.js <<'EOF'
     });
     audio.addEventListener('play', function() {
       toggle.innerHTML = iconSvg('pause');
-      toggle.setAttribute('aria-label', 'Pausar audio');
+      toggle.setAttribute('aria-label', 'Pausar áudio');
     });
     audio.addEventListener('pause', function() {
       toggle.innerHTML = iconSvg('play');
-      toggle.setAttribute('aria-label', 'Reproduzir audio');
+      toggle.setAttribute('aria-label', 'Reproduzir áudio');
     });
     function seekFromRange() {
       var nextTime = Number(range.value || 0);
@@ -408,7 +408,7 @@ cat > /usr/share/nginx/html/chatcase-pdf-preview.js <<'EOF'
   }
 
   function removeStructuredPreviewText(textNode, preview) {
-    if (!textNode || !textNode.parentNode || !preview) return;
+    if (!textNode || !textNode.parentNode) return;
     var parent = textNode.parentNode;
     var cursor = textNode.nextSibling;
     parent.removeChild(textNode);
@@ -427,7 +427,7 @@ cat > /usr/share/nginx/html/chatcase-pdf-preview.js <<'EOF'
       cursor = cursor.nextSibling;
       parent.removeChild(blank);
     }
-    if (cursor && cursor.nodeType === Node.TEXT_NODE && cursor.nodeValue.trim() === preview) {
+    if (preview && cursor && cursor.nodeType === Node.TEXT_NODE && cursor.nodeValue.trim() === preview) {
       parent.removeChild(cursor);
     }
   }
