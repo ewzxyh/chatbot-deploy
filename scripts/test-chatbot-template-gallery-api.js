@@ -266,6 +266,16 @@ function assertNativeInteractions(payload, templateId) {
   );
 }
 
+function assertPublicationPlan(payload, templateId) {
+  const publication = payload.attributes && payload.attributes.publication;
+  assert(publication, `template ${templateId} should expose publication readiness metadata`);
+  assert(Array.isArray(publication.readiness), `template ${templateId} should expose channel readiness`);
+  assert(publication.readiness.some((item) => item.channel === 'waba' && item.status === 'requires_approval'), `template ${templateId} should flag WABA approval requirement`);
+  assert(Array.isArray(publication.wabaTemplates) && publication.wabaTemplates.length > 0, `template ${templateId} should expose WABA template suggestions`);
+  assert(publication.wabaTemplates[0].name, `template ${templateId} WABA suggestion should include a name`);
+  assert(publication.wabaTemplates[0].language === 'pt_BR', `template ${templateId} WABA suggestion should use pt_BR`);
+}
+
 function assertIntentButtons(intent, expectedButtons, label) {
   assert.deepStrictEqual(getIntentButtons(intent), expectedButtons, `${label} should preserve native buttons`);
 }
@@ -317,6 +327,7 @@ async function run() {
       assert(template.attributes.channels.includes('whatsapp'), `template ${expected.id} should support WhatsApp`);
       assert(template.attributes.channels.includes('casezap'), `template ${expected.id} should support CaseZap`);
       assertNativeInteractions(template, expected.id);
+      assertPublicationPlan(template, expected.id);
 
       const detail = await requestJson({
         method: 'GET',
@@ -331,6 +342,7 @@ async function run() {
         assert(detail.intents.some((intent) => intent.intent_display_name === name), `template ${expected.id} intent ${name} should exist`);
       });
       assertNativeInteractions(detail, expected.id);
+      assertPublicationPlan(detail, expected.id);
 
       const detailByName = new Map(detail.intents.map((intent) => [intent.intent_display_name, intent]));
       Object.keys(expected.buttons || {}).forEach((name) => {
@@ -348,6 +360,7 @@ async function run() {
       assert.strictEqual(exported.source, 'chatcase-template-export');
       assert(Array.isArray(exported.intents), `template export ${expected.id} should include intents`);
       assertNativeInteractions(exported, expected.id);
+      assertPublicationPlan(exported, expected.id);
 
       detailByTemplateId.set(expected.id, detail);
     }
