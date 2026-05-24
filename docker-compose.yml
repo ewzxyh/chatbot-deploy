@@ -13,7 +13,7 @@ services:
       - BOT_CREDENTIAL_URL=/api/modules/dialogflow/botcredendials/
       - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-http://localhost:8081}/widget/"
       - SERVER_BASE_URL=/api/
-      - CHAT_BASE_URL=/chat/?v=chatcase-20260524-locale
+      - CHAT_BASE_URL=/chat/?v=chatcase-20260524-locale2
       - CDS_BASE_URL=/cds/
       - WS_URL
       - WS_URL_RELATIVE=/ws/
