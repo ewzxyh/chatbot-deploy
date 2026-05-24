@@ -466,8 +466,9 @@
     var tags = template.channels.map(function (channel) {
       return '<span class="tag">' + escapeHtml(labelFor(channel)) + '</span>';
     }).join('');
-    var signupHref = '/dashboard/#/signup?template=' + encodeURIComponent(template.id);
-    var dashboardHref = '/dashboard/#/login?template=' + encodeURIComponent(template.id);
+    var installParams = 'template=' + encodeURIComponent(template.id) + '&install=1&source=community';
+    var installHref = '/dashboard/#/projects?' + installParams;
+    var signupHref = '/dashboard/#/signup?' + installParams;
     var exportHref = ENDPOINTS.templates + '/' + encodeURIComponent(template.id) + '/export';
 
     els.detail.innerHTML = '' +
@@ -485,9 +486,10 @@
           '<div><strong>' + escapeHtml(template.certified ? 'Sim' : 'Nao') + '</strong><span>Certificado</span></div>' +
         '</div>' +
         '<ul class="feature-list">' + featureItems + '</ul>' +
+        '<p class="install-note">Ao entrar no dashboard, escolha o projeto e o ChatCase importa este modelo automaticamente.</p>' +
         '<div class="detail-actions">' +
-          '<a class="button button-primary" href="' + signupHref + '">Usar modelo</a>' +
-          '<a class="button" href="' + dashboardHref + '">Entrar no dashboard</a>' +
+          '<a class="button button-primary" href="' + installHref + '">Instalar no meu projeto</a>' +
+          '<a class="button" href="' + signupHref + '">Criar conta com este modelo</a>' +
           '<a class="button" href="' + exportHref + '">Baixar JSON</a>' +
           '<button type="button" class="button" data-copy-link="' + escapeHtml(template.id) + '">Copiar link publico</button>' +
         '</div>' +

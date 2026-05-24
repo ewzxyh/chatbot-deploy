@@ -98,6 +98,10 @@ node scripts/r2-storage-smoke.js smoke --env .env.production
 
 The smoke command writes, reads, verifies, and deletes a small object under `R2_KEY_PREFIX`. It prints bucket/key metadata only, never access keys or secrets.
 
+## Community Templates
+
+`/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically.
+
 ## R2 Private Media Worker
 
 R2 should stay private. To serve media directly through Cloudflare instead of proxying every file through the API, deploy the Worker in `workers/media-cdn`.

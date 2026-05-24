@@ -37,6 +37,8 @@ assert(!/https?:\/\/fonts\./i.test(html + css + js), 'Community page should not 
 assert(js.includes('/api/modules/templates/public/templates'), 'JS should consume public templates API');
 assert(js.includes('/api/modules/templates/public/community'), 'JS should keep community API fallback');
 assert(js.includes('template='), 'JS should support public template query links');
+assert(js.includes('/dashboard/#/projects?'), 'JS should route template installs through the protected projects page');
+assert(js.includes('install=1&source=community'), 'JS should preserve direct community install intent');
 assert(js.includes('chatcase-ecommerce-orders'), 'JS fallback should include ecommerce template');
 assert(js.includes('chatcase-clinic-scheduling'), 'JS fallback should include clinic template');
 assert(js.includes('/export'), 'JS should expose template JSON export links');
