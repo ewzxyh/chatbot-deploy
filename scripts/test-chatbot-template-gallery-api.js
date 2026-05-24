@@ -407,6 +407,17 @@ async function run() {
     assert(Array.isArray(wabaDryRun.metaPayload.components), 'WABA dry-run should include Meta components');
     assert.strictEqual(wabaDryRun.status, 'missing_waba_credentials', 'temporary project should report missing WABA credentials');
 
+    const wabaSync = await requestJson({
+      method: 'POST',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/templates/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}/publication/waba/sync`,
+      auth,
+      payload: {}
+    });
+
+    assert.strictEqual(wabaSync.status, 'missing_waba_credentials', 'temporary project should report missing WABA credentials when syncing');
+    assert.strictEqual(wabaSync.canSync, false, 'temporary project should not be syncable without WABA credentials');
+    assert(Array.isArray(wabaSync.templates), 'WABA sync should return template status rows');
+
     const imported = [];
 
     for (const expected of EXPECTED_TEMPLATES) {
