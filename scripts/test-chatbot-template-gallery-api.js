@@ -391,6 +391,22 @@ async function run() {
     projectId = project._id;
     assert(projectId, 'project id should be returned');
 
+    const wabaDryRun = await requestJson({
+      method: 'POST',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/templates/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}/publication/waba`,
+      auth,
+      payload: {
+        suggestionName: 'chatcase_menu_basico_inicio',
+        publish: false
+      }
+    });
+
+    assert.strictEqual(wabaDryRun.dryRun, true, 'WABA publication should default to dry-run');
+    assert.strictEqual(wabaDryRun.channel, 'waba', 'WABA publication should target WABA channel');
+    assert.strictEqual(wabaDryRun.metaPayload.name, 'chatcase_menu_basico_inicio', 'WABA dry-run should expose Meta payload');
+    assert(Array.isArray(wabaDryRun.metaPayload.components), 'WABA dry-run should include Meta components');
+    assert.strictEqual(wabaDryRun.status, 'missing_waba_credentials', 'temporary project should report missing WABA credentials');
+
     const imported = [];
 
     for (const expected of EXPECTED_TEMPLATES) {
