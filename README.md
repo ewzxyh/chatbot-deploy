@@ -8,7 +8,7 @@ This repository contains Docker Compose, nginx proxy config, ChatCase runtime pa
 
 - `docker-compose.yml`: local/production container orchestration.
 - `proxy-nginx.conf`: nginx routes, cache headers, websocket proxying, and app shell cache rules.
-- `ionic-rebrand.sh`: runtime customization for `chat21-ionic`.
+- `ionic-rebrand.sh`: runtime customization for the local `../chatcase-chat21-ionic` fork.
 - `scripts/`: Mongo backup, restore-test, R2 upload/download, daily backup wrapper, and config checks.
 - `vps/`: Linux VPS backup service/timer templates and installer.
 - `.env.example`: safe template for local/VPS secrets.
@@ -48,6 +48,8 @@ SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --
 ```
 
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
+
+The `/chat/` service is built from the local `../chatcase-chat21-ionic` fork. Keep that repo beside this deploy repo before running `docker compose up --build`; the official image is left commented in `docker-compose.yml` only as an upstream reference.
 
 In production, only the proxy port should be published. `docker-compose.prod.yml` resets inherited internal service ports with `ports: !reset []`, so Mongo, Redis, RabbitMQ, server, chat, dashboard, Qdrant, workers, and the incident receiver are reachable only on the Docker network. Use the proxy for every public route.
 

@@ -7,12 +7,13 @@ services:
     #image: "tiledesk/tiledesk-dashboard:2.7.134-stage"
     container_name: dashboard
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
         FEATURES_TOKEN=PAY:T-ANA:T-ACT:T-TRI:T-GRO:T-DEP:T-OPH:T-MTL:T-CAR:T-PSA:F-MTT:T-SUP:T-LBS:T-APP:T-DEV:F-NOT:T-IPS:F-ETK:F-RAS:F-PPB:F-PET:F-MTS:F-TIL:T-DGF:T-NAT:T-HPB:F-TOW:F-KNB:T-GPT:T-BAN:F-AST:F-MON:T-CNT:F-AUT:F-WUN:F-INT:T-DPA:T-QIN:T
       - BOT_CREDENTIAL_URL=/api/modules/dialogflow/botcredendials/
       - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-http://localhost:8081}/widget/"
       - SERVER_BASE_URL=/api/
-      - CHAT_BASE_URL=/chat/?v=chatcase-20260508
+      - CHAT_BASE_URL=/chat/?v=chatcase-20260524-locale
       - CDS_BASE_URL=/cds/
       - WS_URL
       - WS_URL_RELATIVE=/ws/
@@ -43,6 +44,7 @@ services:
     image: "tiledesk/design-studio:1.39.9-rc3"
     container_name: cds
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
         FEATURES_TOKEN=PAY:T-ANA:T-ACT:T-TRI:T-GRO:T-DEP:T-OPH:T-MTL:T-CAR:T-PSA:F-MTT:T-SUP:T-LBS:T-APP:T-DEV:F-NOT:T-IPS:F-ETK:F-RAS:F-PPB:F-PET:F-MTS:F-TIL:T-DGF:T-NAT:T-HPB:F-TOW:F-KNB:T-GPT:T-BAN:F-AST:F-MON:T-CNT:F-AUT:F-WUN:F-INT:T-DPA:T-QIN:T
       - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-http://localhost:8081}/widget/"
@@ -78,6 +80,7 @@ services:
     ports:
       - "127.0.0.1:4200:80"
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - CHAT21_ENGINE=mqtt
       - MQTT_APPID=tilechat
       - PUSH_ENGINE=none
@@ -102,7 +105,8 @@ services:
       - FILE_UPLOAD_ACCEPT=*/*
     restart: unless-stopped
   ionic:
-    image: "chat21/chat21-ionic:3.4.22"
+    build: ../chatcase-chat21-ionic
+    # image: "chat21/chat21-ionic:3.4.22"
     container_name: chat21-ionic
     volumes:
       - ./ionic-rebrand.sh:/docker-entrypoint.d/99-rebrand.sh:ro
@@ -117,6 +121,7 @@ services:
     ports:
       - "127.0.0.1:8082:80" # local direct access only; production should enter through proxy
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - DASHBOARD_URL=/dashboard/
       - API_BASEIMAGE_URL=/api/
       - SERVER_BASE_URL=/api/
@@ -156,6 +161,7 @@ services:
     image: "tiledesk/tiledesk-chatbot:2.0.32-rc8"
     container_name: chatbot
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - "API_ENDPOINT=http://server:3000"
       - "TILEBOT_ENDPOINT=http://chatbot:3000"
       - "API_URL=${EXTERNAL_BASE_URL:-http://localhost:8081}/api"
@@ -182,6 +188,8 @@ services:
     container_name: server
     restart: always
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
+      - "CHATCASE_DEFAULT_TIMEZONE=${CHATCASE_DEFAULT_TIMEZONE:-America/Sao_Paulo}"
       - LOG_LEVEL=info
       - CHAT21_ENABLED=true
       - CHAT21_ENGINE=mqtt
@@ -341,6 +349,7 @@ services:
     volumes:
       - ./:/app:ro
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - INCIDENT_AUTOMATION_HOST=0.0.0.0
       - "INCIDENT_AUTOMATION_PORT=${INCIDENT_AUTOMATION_PORT:-8787}"
       - "INCIDENT_AUTOMATION_DRY_RUN=${INCIDENT_AUTOMATION_DRY_RUN:-true}"
@@ -360,6 +369,7 @@ services:
     container_name: chat21httpserver
     restart: unless-stopped
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - LOG_LEVEL=info
       #- AUTO_RESTART=false
       - "MONGODB_URI=${CHAT21_MONGODB_URI:-mongodb://mongo/chat21}"
@@ -390,6 +400,7 @@ services:
     container_name: chat21server
     restart: unless-stopped
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       #- AUTO_RESTART=false
       - LOG_LEVEL=info
       - "MONGODB_URI=${CHAT21_MONGODB_URI:-mongodb://mongo/chat21}"
@@ -411,6 +422,7 @@ services:
     image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
     container_name: backend-llm-train
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - TIMEOUT=240
       # - 'REDIS_URL=redis://host.docker.internal:6379'
       - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
@@ -438,6 +450,7 @@ services:
     image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
     container_name: backend-llm-qa
     environment:
+      - "TZ=${TZ:-America/Sao_Paulo}"
       - TIMEOUT=240
       # - 'REDIS_URL=redis://host.docker.internal:6379'
       - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
@@ -500,6 +513,7 @@ services:
     volumes:
       - ./rabbitmq-configure-and-start.sh:/usr/local/bin/chatcase-rabbitmq-configure-and-start.sh:ro
     environment:
+      TZ: "${TZ:-America/Sao_Paulo}"
       RABBITMQ_ERLANG_COOKIE: "${RABBITMQ_ERLANG_COOKIE:-chatcase-dev-cookie}"
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:-admin}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:-change-me}"
@@ -527,6 +541,8 @@ services:
     command: "--bind_ip_all"
     volumes:
       - "tiledesk-datadb:/data/db"
+    environment:
+      TZ: "${TZ:-America/Sao_Paulo}"
     ports:
       - "127.0.0.1:27017:27017"
     healthcheck:
@@ -545,6 +561,8 @@ services:
     image: "redis:7.0.5"
     volumes:
       - "redis-data:/data"
+    environment:
+      TZ: "${TZ:-America/Sao_Paulo}"
     ports:
       - "127.0.0.1:6379:6379"
     healthcheck:
