@@ -250,6 +250,7 @@ services:
       - "SESSION_SECRET=${SESSION_SECRET:REDACTED_SECRET}"
       - BOOT_LOADING=true
       - "META_GRAPH_URL=https://graph.facebook.com/v20.0/"
+      - "WABA_TEMPLATE_PUBLICATION_TIMEOUT_MS=${WABA_TEMPLATE_PUBLICATION_TIMEOUT_MS:-30000}"
       - "TELEGRAM_API_URL=https://api.telegram.org/bot"
       - "TELEGRAM_FILE_URL=https://api.telegram.org/file/bot"
       - TELEGRAM_LOG=info
