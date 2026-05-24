@@ -1,3 +1,5 @@
+name: tiledesk
+
 volumes:
   tiledesk-datadb:
   redis-data:
