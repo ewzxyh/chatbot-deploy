@@ -66,6 +66,9 @@ O `tiledesk-server` publica uma biblioteca inicial de templates certificados Cha
 - ID: `chatcase-whatsapp-menu-basic`;
 - ID: `chatcase-ecommerce-orders`;
 - ID: `chatcase-clinic-scheduling`;
+- ID: `chatcase-restaurant-delivery`;
+- ID: `chatcase-real-estate-leads`;
+- ID: `chatcase-education-courses`;
 - rota de lista: `/api/modules/templates/public/templates`;
 - rota de detalhe: `/api/modules/templates/public/templates/<template-id>`;
 - rota de exportacao JSON: `/api/modules/templates/public/templates/<template-id>/export`;

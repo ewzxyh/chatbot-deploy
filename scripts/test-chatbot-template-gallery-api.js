@@ -60,6 +60,69 @@ const EXPECTED_TEMPLATES = [
       prices: ['Valores', 'Convenios', 'Valores e convenios'],
       human_handoff: ['Recepcao', 'Falar com recepcao']
     }
+  },
+  {
+    id: 'chatcase-restaurant-delivery',
+    intents: ['defaultFallback', 'start', 'menu', 'menu_link', 'hours_delivery', 'order_status', 'human_handoff'],
+    questions: {
+      start: '\\start',
+      menu_link: '1',
+      hours_delivery: '2',
+      order_status: '3',
+      human_handoff: '4'
+    },
+    buttons: {
+      start: ['Cardapio', 'Horario', 'Pedido', 'Atendente'],
+      menu: ['Cardapio', 'Horario', 'Pedido', 'Atendente']
+    },
+    aliases: {
+      menu_link: ['Cardapio', 'Ver cardapio'],
+      hours_delivery: ['Horario', 'Horario e entrega', 'Entrega'],
+      order_status: ['Pedido', 'Status do pedido', 'Status pedido'],
+      human_handoff: ['Atendente', 'Falar com atendente']
+    }
+  },
+  {
+    id: 'chatcase-real-estate-leads',
+    intents: ['defaultFallback', 'start', 'menu', 'buy_property', 'rent_property', 'schedule_visit', 'human_handoff'],
+    questions: {
+      start: '\\start',
+      buy_property: '1',
+      rent_property: '2',
+      schedule_visit: '3',
+      human_handoff: '4'
+    },
+    buttons: {
+      start: ['Comprar', 'Alugar', 'Visita', 'Corretor'],
+      menu: ['Comprar', 'Alugar', 'Visita', 'Corretor']
+    },
+    aliases: {
+      buy_property: ['Comprar', 'Comprar imovel'],
+      rent_property: ['Alugar', 'Alugar imovel'],
+      schedule_visit: ['Visita', 'Agendar visita'],
+      human_handoff: ['Corretor', 'Falar com corretor']
+    }
+  },
+  {
+    id: 'chatcase-education-courses',
+    intents: ['defaultFallback', 'start', 'menu', 'courses', 'pricing', 'enrollment', 'human_handoff'],
+    questions: {
+      start: '\\start',
+      courses: '1',
+      pricing: '2',
+      enrollment: '3',
+      human_handoff: '4'
+    },
+    buttons: {
+      start: ['Cursos', 'Valores', 'Matricula', 'Consultor'],
+      menu: ['Cursos', 'Valores', 'Matricula', 'Consultor']
+    },
+    aliases: {
+      courses: ['Cursos', 'Ver cursos'],
+      pricing: ['Valores', 'Valores e bolsas', 'Bolsas'],
+      enrollment: ['Matricula', 'Fazer matricula'],
+      human_handoff: ['Consultor', 'Falar com consultor']
+    }
   }
 ];
 

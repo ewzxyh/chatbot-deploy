@@ -22,6 +22,16 @@
     clinica: 'Clinica',
     agendamento: 'Agendamento',
     recepcao: 'Recepcao',
+    restaurante: 'Restaurante',
+    delivery: 'Delivery',
+    cardapio: 'Cardapio',
+    imobiliaria: 'Imobiliaria',
+    imoveis: 'Imoveis',
+    visitas: 'Visitas',
+    leads: 'Leads',
+    educacao: 'Educacao',
+    cursos: 'Cursos',
+    matriculas: 'Matriculas',
     'customer satisfaction': 'Satisfacao do cliente',
     'increase sales': 'Aumentar vendas'
   };
@@ -111,6 +121,90 @@
         channels: ['whatsapp', 'casezap']
       },
       intentsCount: 6
+    },
+    {
+      _id: 'chatcase-restaurant-delivery',
+      certified: true,
+      public: true,
+      language: 'pt',
+      name: 'ChatCase Restaurante e delivery',
+      title: 'Restaurante e delivery',
+      description: 'Fluxo para restaurantes, lanchonetes e operacoes de delivery com cardapio, horario, status do pedido e atendimento humano.',
+      short_description: 'Menu para cardapio, horario de funcionamento, status do pedido e atendimento.',
+      type: 'tilebot',
+      subtype: 'chatbot',
+      mainCategory: 'Increase Sales',
+      bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
+      tags: ['whatsapp', 'casezap', 'restaurante', 'delivery', 'cardapio', 'pedidos'],
+      certifiedTags: [
+        { name: 'WhatsApp', color: '#25833e' },
+        { name: 'CaseZap', color: '#0049bd' }
+      ],
+      templateFeatures: [
+        'Atendimento inicial para delivery',
+        'Opcoes de cardapio, horario e status do pedido',
+        'Handoff para atendente quando precisar'
+      ],
+      attributes: {
+        channels: ['whatsapp', 'casezap']
+      },
+      intentsCount: 7
+    },
+    {
+      _id: 'chatcase-real-estate-leads',
+      certified: true,
+      public: true,
+      language: 'pt',
+      name: 'ChatCase Imobiliaria e visitas',
+      title: 'Imobiliaria e visitas',
+      description: 'Fluxo para imobiliarias e corretores captarem interesse, filtrarem compra ou aluguel, agendarem visitas e encaminharem para atendimento.',
+      short_description: 'Menu para compra, aluguel, agendamento de visita e atendimento com corretor.',
+      type: 'tilebot',
+      subtype: 'chatbot',
+      mainCategory: 'Increase Sales',
+      bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
+      tags: ['whatsapp', 'casezap', 'imobiliaria', 'imoveis', 'visitas', 'leads'],
+      certifiedTags: [
+        { name: 'WhatsApp', color: '#25833e' },
+        { name: 'CaseZap', color: '#0049bd' }
+      ],
+      templateFeatures: [
+        'Qualificacao inicial para compra ou aluguel',
+        'Coleta de bairro, faixa de valor e tipo de imovel',
+        'Agendamento de visita com corretor'
+      ],
+      attributes: {
+        channels: ['whatsapp', 'casezap']
+      },
+      intentsCount: 7
+    },
+    {
+      _id: 'chatcase-education-courses',
+      certified: true,
+      public: true,
+      language: 'pt',
+      name: 'ChatCase Cursos e matriculas',
+      title: 'Cursos e matriculas',
+      description: 'Fluxo para escolas, cursos livres e treinamentos responderem sobre cursos, valores, matricula e atendimento humano.',
+      short_description: 'Menu para cursos, valores, matricula e atendimento com consultor.',
+      type: 'tilebot',
+      subtype: 'chatbot',
+      mainCategory: 'Increase Sales',
+      bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
+      tags: ['whatsapp', 'casezap', 'educacao', 'cursos', 'matriculas', 'leads'],
+      certifiedTags: [
+        { name: 'WhatsApp', color: '#25833e' },
+        { name: 'CaseZap', color: '#0049bd' }
+      ],
+      templateFeatures: [
+        'Triagem de interesse por curso',
+        'Resposta inicial sobre valores e formas de pagamento',
+        'Encaminhamento para consultor de matricula'
+      ],
+      attributes: {
+        channels: ['whatsapp', 'casezap']
+      },
+      intentsCount: 7
     }
   ];
 

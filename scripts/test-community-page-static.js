@@ -41,6 +41,9 @@ assert(js.includes('/dashboard/#/projects?'), 'JS should route template installs
 assert(js.includes('install=1&source=community'), 'JS should preserve direct community install intent');
 assert(js.includes('chatcase-ecommerce-orders'), 'JS fallback should include ecommerce template');
 assert(js.includes('chatcase-clinic-scheduling'), 'JS fallback should include clinic template');
+assert(js.includes('chatcase-restaurant-delivery'), 'JS fallback should include restaurant delivery template');
+assert(js.includes('chatcase-real-estate-leads'), 'JS fallback should include real estate template');
+assert(js.includes('chatcase-education-courses'), 'JS fallback should include education template');
 assert(js.includes('/export'), 'JS should expose template JSON export links');
 assert(nginx.includes('location /community/'), 'Nginx should serve /community/');
 assert(nginx.includes('try_files $uri $uri/ /community/index.html'), 'Nginx should fallback to community index');
