@@ -36,6 +36,7 @@
     'increase sales': 'Aumentar vendas'
   };
   var KNOWN_CHANNELS = ['whatsapp', 'casezap', 'telegram', 'messenger', 'sms', 'voice', 'email', 'widget', 'waba'];
+  var initialParams = new URLSearchParams(window.location.search);
 
   var fallbackTemplates = [
     {
@@ -214,9 +215,9 @@
     filtered: [],
     detailById: {},
     query: '',
-    channel: 'all',
+    channel: normalizeInitialChannel(initialParams.get('channel')),
     category: 'all',
-    selectedId: new URLSearchParams(window.location.search).get('template') || null,
+    selectedId: initialParams.get('template') || null,
     apiNotice: ''
   };
 
@@ -294,6 +295,15 @@
   function labelFor(value) {
     var key = String(value || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
     return LABELS[key] || titleCase(value);
+  }
+
+  function normalizeInitialChannel(value) {
+    var channel = String(value || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    if (!channel || channel === 'all' || channel === 'todos') {
+      return 'all';
+    }
+
+    return KNOWN_CHANNELS.indexOf(channel) !== -1 ? channel : 'all';
   }
 
   function textOnly(value) {
@@ -447,6 +457,9 @@
     container.querySelectorAll('button').forEach(function (button) {
       button.addEventListener('click', function () {
         state[key] = button.getAttribute('data-value');
+        if (key === 'channel') {
+          updateUrlChannel(state[key]);
+        }
         renderFilters();
         applyFilters();
       });
@@ -471,12 +484,29 @@
     return channelMatch && categoryMatch && queryMatch;
   }
 
+  function isKnownTemplateChannel(template, channel) {
+    if (!template || !Array.isArray(template.channels)) {
+      return false;
+    }
+
+    return template.channels.some(function (templateChannel) {
+      return String(templateChannel || '').trim().toLowerCase() === channel;
+    });
+  }
+
   function applyFilters() {
     state.filtered = state.templates.filter(matchesTemplate);
 
     if (!state.filtered.some(function (template) { return template.id === state.selectedId; }) && state.filtered[0]) {
       state.selectedId = state.filtered[0].id;
       hydrateDetail(state.selectedId);
+    }
+
+    if (state.selectedId && !state.filtered.length) {
+      var selectedTemplate = findTemplate(state.selectedId);
+      if (state.channel !== 'all' && !isKnownTemplateChannel(selectedTemplate, state.channel)) {
+        state.detailById[state.selectedId + ':unsupported:' + state.channel] = selectedTemplate;
+      }
     }
 
     renderGrid();
@@ -521,6 +551,7 @@
     state.selectedId = id;
     var url = new URL(window.location.href);
     url.searchParams.set('template', id);
+    url.searchParams.set('channel', getSelectedChannelForTemplate(findTemplate(id)));
     window.history.replaceState({}, '', url.toString());
     hydrateDetail(id);
     renderGrid();
@@ -534,7 +565,13 @@
   }
 
   function hydrateDetail(id) {
-    var channel = getSelectedChannelForTemplate(findTemplate(id));
+    var baseTemplate = findTemplate(id);
+    if (isSelectedChannelUnsupported(baseTemplate)) {
+      state.detailById[id + ':unsupported:' + state.channel] = baseTemplate;
+      return;
+    }
+
+    var channel = getSelectedChannelForTemplate(baseTemplate);
     var cacheKey = id + ':' + channel;
 
     if (state.detailById[cacheKey]) {
@@ -554,6 +591,11 @@
 
   function renderDetail() {
     var baseTemplate = findTemplate(state.selectedId);
+    if (isSelectedChannelUnsupported(baseTemplate)) {
+      renderUnsupportedDetail(baseTemplate);
+      return;
+    }
+
     var cacheKey = state.selectedId + ':' + getSelectedChannelForTemplate(baseTemplate);
     var template = state.detailById[cacheKey] || baseTemplate;
 
@@ -626,9 +668,36 @@
     return String(template.channels[0]).trim().toLowerCase();
   }
 
+  function isSelectedChannelUnsupported(template) {
+    return !!template && state.channel && state.channel !== 'all' && !isKnownTemplateChannel(template, state.channel);
+  }
+
+  function renderUnsupportedDetail(template) {
+    if (!template) {
+      els.detail.innerHTML = '<div class="detail-empty"><strong>Selecione um modelo</strong><span>Os detalhes e a acao de importacao aparecem aqui.</span></div>';
+      return;
+    }
+
+    var availableChannels = template.channels.map(function (channel) {
+      return '<span class="tag">' + escapeHtml(labelFor(channel)) + '</span>';
+    }).join('');
+
+    els.detail.innerHTML = '' +
+      '<div class="detail-body">' +
+        '<div>' +
+          '<h3>' + escapeHtml(template.name) + '</h3>' +
+          '<p class="detail-description">Este modelo nao possui versao compativel com ' + escapeHtml(labelFor(state.channel)) + '.</p>' +
+        '</div>' +
+        '<div class="tag-list">' + availableChannels + '</div>' +
+        '<p class="install-note">Escolha um dos canais suportados para instalar ou baixar o JSON deste modelo.</p>' +
+      '</div>';
+  }
+
   function copyPublicLink(id, button) {
     var url = new URL(window.location.href);
+    var channel = getSelectedChannelForTemplate(findTemplate(id));
     url.searchParams.set('template', id);
+    url.searchParams.set('channel', channel);
     var value = url.toString();
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -639,6 +708,16 @@
     }
 
     window.prompt('Copie o link publico:', value);
+  }
+
+  function updateUrlChannel(channel) {
+    var url = new URL(window.location.href);
+    if (!channel || channel === 'all') {
+      url.searchParams.delete('channel');
+    } else {
+      url.searchParams.set('channel', channel);
+    }
+    window.history.replaceState({}, '', url.toString());
   }
 
   function updateSummary() {

@@ -467,6 +467,20 @@ async function run() {
 
     assert(telegramForkRejected, 'fork should reject unsupported Telegram channel');
 
+    let allChannelForkRejected = false;
+
+    try {
+      await requestJson({
+        method: 'POST',
+        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}?public=true&projectid=${encodeURIComponent(projectId)}&channel=all`,
+        auth
+      });
+    } catch (error) {
+      allChannelForkRejected = /HTTP 400/.test(error.message);
+    }
+
+    assert(allChannelForkRejected, 'fork should reject ambiguous channel=all imports');
+
     const defaultFork = await requestJson({
       method: 'POST',
       url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}?public=true&projectid=${encodeURIComponent(projectId)}`,

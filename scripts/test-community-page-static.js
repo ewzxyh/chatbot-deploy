@@ -40,6 +40,8 @@ assert(js.includes('template='), 'JS should support public template query links'
 assert(js.includes('/dashboard/#/projects?'), 'JS should route template installs through the protected projects page');
 assert(js.includes('install=1&source=community'), 'JS should preserve direct community install intent');
 assert(js.includes('&channel='), 'JS should carry selected channel into template install links');
+assert(js.includes("initialParams.get('channel')"), 'JS should initialize the community channel filter from URL query');
+assert(js.includes("url.searchParams.set('channel'"), 'JS should preserve selected channel in public links');
 assert(js.includes('chatcase-ecommerce-orders'), 'JS fallback should include ecommerce template');
 assert(js.includes('chatcase-clinic-scheduling'), 'JS fallback should include clinic template');
 assert(js.includes('chatcase-restaurant-delivery'), 'JS fallback should include restaurant delivery template');
