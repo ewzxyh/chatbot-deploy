@@ -8,6 +8,8 @@ services:
     build: ../tiledesk-dashboard
     #image: "tiledesk/tiledesk-dashboard:2.7.134-stage"
     container_name: dashboard
+    volumes:
+      - ./dashboard-rebrand.sh:/docker-entrypoint.d/99-dashboard-rebrand.sh:ro
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
@@ -41,10 +43,22 @@ services:
       - FILE_UPLOAD_ACCEPT=*/*
     ports:
       - "127.0.0.1:4500:80" # local direct access only; production should enter through proxy
+    command: >-
+      /bin/sh -c "envsubst < /usr/share/nginx/html/dashboard-config-template.json > /usr/share/nginx/html/dashboard-config.json &&
+      sh /docker-entrypoint.d/99-dashboard-rebrand.sh &&
+      exec nginx -g 'daemon off;'"
     restart: unless-stopped
   cds:
     image: "tiledesk/design-studio:1.39.9-rc3"
     container_name: cds
+    volumes:
+      - ./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro
+      - ../tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
+      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/assets/logos/logo-short.png:ro
+      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
+      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
+      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
+      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
@@ -75,6 +89,10 @@ services:
       - "MQTT_ENDPOINT=${EXTERNAL_MQTT_BASE_URL:-}/mqws/ws"
     ports:
       - "127.0.0.1:4502:80" # local direct access only; production should enter through proxy
+    command: >-
+      /bin/sh -c "envsubst < /usr/share/nginx/html/design-studio-config-template.json > /usr/share/nginx/html/design-studio-config.json &&
+      sh /docker-entrypoint.d/99-cds-rebrand.sh &&
+      exec nginx -g 'daemon off;'"
     restart: unless-stopped
   webwidget:
     image: "chat21/chat21-web-widget:5.1.2"
