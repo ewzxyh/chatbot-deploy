@@ -282,9 +282,16 @@ function assertPublicationPlan(payload, templateId, selectedChannel) {
   }
 
   assert(publication.readiness.some((item) => item.channel === 'waba' && item.status === 'requires_approval'), `template ${templateId} should flag WABA approval requirement`);
-  assert(Array.isArray(publication.wabaTemplates) && publication.wabaTemplates.length > 0, `template ${templateId} should expose WABA template suggestions`);
-  assert(publication.wabaTemplates[0].name, `template ${templateId} WABA suggestion should include a name`);
-  assert(publication.wabaTemplates[0].language === 'pt_BR', `template ${templateId} WABA suggestion should use pt_BR`);
+  assert(Array.isArray(publication.wabaTemplates) && publication.wabaTemplates.length >= 3, `template ${templateId} should expose a WABA template library`);
+  const names = publication.wabaTemplates.map((item) => item.name);
+  assert.strictEqual(new Set(names).size, names.length, `template ${templateId} WABA suggestion names should be unique`);
+  publication.wabaTemplates.forEach((suggestion) => {
+    assert(suggestion.name, `template ${templateId} WABA suggestion should include a name`);
+    assert(suggestion.language === 'pt_BR', `template ${templateId} WABA suggestion should use pt_BR`);
+    assert(['UTILITY', 'MARKETING'].includes(suggestion.category), `template ${templateId} WABA suggestion should use a Meta category`);
+    assert(suggestion.purpose, `template ${templateId} WABA suggestion should describe purpose`);
+    assert(suggestion.whenToUse, `template ${templateId} WABA suggestion should describe usage context`);
+  });
 }
 
 function assertIntentButtons(intent, expectedButtons, label) {
