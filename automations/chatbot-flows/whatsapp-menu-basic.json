@@ -9,9 +9,27 @@
     "source": "chatcase-tiledesk-deploy",
     "channels": [
       "whatsapp",
-      "casezap",
-      "telegram"
+      "casezap"
     ],
+    "availableChannels": [
+      "whatsapp",
+      "casezap"
+    ],
+    "compatibilityVersion": 1,
+    "channelCompatibility": {
+      "whatsapp": {
+        "status": "supported",
+        "title": "WhatsApp com conversa aberta",
+        "mode": "session",
+        "nativeInteractions": "buttons"
+      },
+      "casezap": {
+        "status": "supported",
+        "title": "CaseZap / UAZAPI",
+        "mode": "session",
+        "nativeInteractions": "menu"
+      }
+    },
     "nativeInteractions": {
       "whatsapp": "buttons",
       "casezap": "menu"

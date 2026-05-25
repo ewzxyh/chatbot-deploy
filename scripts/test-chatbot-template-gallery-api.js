@@ -266,10 +266,21 @@ function assertNativeInteractions(payload, templateId) {
   );
 }
 
-function assertPublicationPlan(payload, templateId) {
+function assertPublicationPlan(payload, templateId, selectedChannel) {
   const publication = payload.attributes && payload.attributes.publication;
   assert(publication, `template ${templateId} should expose publication readiness metadata`);
   assert(Array.isArray(publication.readiness), `template ${templateId} should expose channel readiness`);
+
+  if (selectedChannel) {
+    assert.strictEqual(payload.attributes.targetChannel, selectedChannel, `template ${templateId} should mark selected channel`);
+    assert(publication.readiness.every((item) => item.channel === selectedChannel), `template ${templateId} readiness should be scoped to ${selectedChannel}`);
+
+    if (selectedChannel !== 'waba') {
+      assert(!publication.wabaTemplates, `template ${templateId} should hide WABA suggestions for ${selectedChannel}`);
+      return;
+    }
+  }
+
   assert(publication.readiness.some((item) => item.channel === 'waba' && item.status === 'requires_approval'), `template ${templateId} should flag WABA approval requirement`);
   assert(Array.isArray(publication.wabaTemplates) && publication.wabaTemplates.length > 0, `template ${templateId} should expose WABA template suggestions`);
   assert(publication.wabaTemplates[0].name, `template ${templateId} WABA suggestion should include a name`);
@@ -365,6 +376,29 @@ async function run() {
       detailByTemplateId.set(expected.id, detail);
     }
 
+    const casezapTemplates = await requestJson({
+      method: 'GET',
+      url: `${baseUrl}${apiPrefix}/modules/templates/public/templates?channel=casezap`
+    });
+
+    assert(Array.isArray(casezapTemplates), 'casezap template list should be an array');
+    for (const expected of EXPECTED_TEMPLATES) {
+      const template = casezapTemplates.find((item) => item._id === expected.id);
+      assert(template, `casezap template ${expected.id} should be listed`);
+      assert(template.attributes && Array.isArray(template.attributes.channels), `casezap template ${expected.id} should expose channels`);
+      assert(!template.attributes.channels.includes('telegram'), `casezap template ${expected.id} should not advertise Telegram`);
+      assertPublicationPlan(template, expected.id, 'casezap');
+    }
+
+    const telegramTemplates = await requestJson({
+      method: 'GET',
+      url: `${baseUrl}${apiPrefix}/modules/templates/public/templates?channel=telegram`
+    });
+
+    EXPECTED_TEMPLATES.forEach((expected) => {
+      assert(!telegramTemplates.some((item) => item._id === expected.id), `telegram should not list ${expected.id}`);
+    });
+
     const signup = await requestJson({
       method: 'POST',
       url: `${baseUrl}${apiPrefix}/auth/signup`,
@@ -419,12 +453,41 @@ async function run() {
     assert(Array.isArray(wabaSync.templates), 'WABA sync should return template status rows');
 
     const imported = [];
+    let telegramForkRejected = false;
+
+    try {
+      await requestJson({
+        method: 'POST',
+        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}?public=true&projectid=${encodeURIComponent(projectId)}&channel=telegram`,
+        auth
+      });
+    } catch (error) {
+      telegramForkRejected = /HTTP 400/.test(error.message);
+    }
+
+    assert(telegramForkRejected, 'fork should reject unsupported Telegram channel');
+
+    const defaultFork = await requestJson({
+      method: 'POST',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}?public=true&projectid=${encodeURIComponent(projectId)}`,
+      auth
+    });
+
+    const defaultBot = await requestJson({
+      method: 'GET',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/${encodeURIComponent(defaultFork.bot_id)}`,
+      auth
+    });
+
+    assert.strictEqual(defaultBot.attributes && defaultBot.attributes.targetChannel, 'casezap', 'fork without channel should default ChatCase templates to CaseZap');
+    assert(defaultBot.attributes && defaultBot.attributes.publication, 'fork without channel should keep channel-scoped publication metadata');
+    assert(!defaultBot.attributes.publication.wabaTemplates, 'fork without channel should not keep WABA suggestions');
 
     for (const expected of EXPECTED_TEMPLATES) {
       const detail = detailByTemplateId.get(expected.id);
       const fork = await requestJson({
         method: 'POST',
-        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(expected.id)}?public=true&projectid=${encodeURIComponent(projectId)}`,
+        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(expected.id)}?public=true&projectid=${encodeURIComponent(projectId)}&channel=casezap`,
         auth
       });
 
@@ -439,6 +502,9 @@ async function run() {
       assert.strictEqual(persistedBot.name, detail.name);
       assert.strictEqual(persistedBot.type, 'tilebot');
       assert.strictEqual(persistedBot.subtype, 'chatbot');
+      assert.strictEqual(persistedBot.attributes && persistedBot.attributes.targetChannel, 'casezap');
+      assert(persistedBot.attributes && persistedBot.attributes.publication, `persisted template ${expected.id} should keep channel publication metadata`);
+      assert(!persistedBot.attributes.publication.wabaTemplates, `persisted template ${expected.id} should not keep WABA suggestions for CaseZap`);
 
       const intents = await requestJson({
         method: 'GET',

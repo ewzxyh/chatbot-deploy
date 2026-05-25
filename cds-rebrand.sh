@@ -10,6 +10,13 @@ patch_static_text() {
       -e 's#Tiledesk ver#ChatCase ver#g' \
       -e 's#Try Tiledesk now!#ChatCase Design Studio#g' \
       -e 's#Try ChatCase now!#ChatCase Design Studio#g' \
+      -e 's#WhatsApp Static#Template WABA#g' \
+      -e 's#WhatsApp by Attribute#Template WABA por atributo#g' \
+      -e 's#WhatsApp by Segment#Template WABA por segmento#g' \
+      -e 's#WhatsApp static#Template WABA#g' \
+      -e 's#WhatsApp by attribute#Template WABA por atributo#g' \
+      -e 's#WhatsApp by segment#Template WABA por segmento#g' \
+      -e 's#This action send an approved WhatsApp template#Envia um template aprovado pela Meta/WABA#g' \
       -e "s#Qualify your leads to increase your sales faster\. It's really easy to do it with the Tiledesk conversational form builder#Crie e publique fluxos de atendimento do ChatCase#g" \
       -e "s#Qualify your leads to increase your sales faster\. It's really easy to do it with the ChatCase conversational form builder#Crie e publique fluxos de atendimento do ChatCase#g" \
       -e 's#© 2024 Tiledesk#© 2026 ChatCase#g' \
@@ -138,9 +145,9 @@ patch_i18n() {
     -e 's#"WebRequest": "Web request"#"WebRequest": "Requisição web"#g' \
     -e 's#"WebResponse": "Web response"#"WebResponse": "Resposta web"#g' \
     -e 's#"SendEmail": "Send email"#"SendEmail": "Enviar e-mail"#g' \
-    -e 's#"WhatsAppStatic": "WhatsApp static"#"WhatsAppStatic": "WhatsApp estático"#g' \
-    -e 's#"WhatsAppByAttribute": "WhatsApp by attribute"#"WhatsAppByAttribute": "WhatsApp por atributo"#g' \
-    -e 's#"WhatsAppBySegment": "WhatsApp by segment"#"WhatsAppBySegment": "WhatsApp por segmento"#g' \
+    -e 's#"WhatsAppStatic": "WhatsApp static"#"WhatsAppStatic": "Template WABA"#g' \
+    -e 's#"WhatsAppByAttribute": "WhatsApp by attribute"#"WhatsAppByAttribute": "Template WABA por atributo"#g' \
+    -e 's#"WhatsAppBySegment": "WhatsApp by segment"#"WhatsAppBySegment": "Template WABA por segmento"#g' \
     -e 's#"AddKBContent":"Add to knowledge base"#"AddKBContent":"Adicionar à base de conhecimento"#g' \
     -e 's#"AskTheKnowledgeBase": "Ask knowledge base"#"AskTheKnowledgeBase": "Consultar base de conhecimento"#g' \
     -e 's#"AskTheKnowledgeBaseV2": "Ask knowledge base V2"#"AskTheKnowledgeBaseV2": "Consultar base de conhecimento V2"#g' \
@@ -171,8 +178,189 @@ patch_i18n() {
     "$file"
 }
 
+patch_channel_guard() {
+  cat > "$ROOT/chatcase-cds-channel-guard.js" <<'EOF'
+(function () {
+  'use strict';
+
+  var blockedWabaLabels = [
+    /whatsapp\s+static/i,
+    /whatsapp\s+by\s+attribute/i,
+    /whatsapp\s+by\s+segment/i,
+    /send\s+whatsapp/i,
+    /template\s+waba/i,
+    /waba\s+por\s+atributo/i,
+    /waba\s+por\s+segmento/i,
+    /enviar\s+whatsapp/i
+  ];
+  var observer;
+  var lastChannel = '';
+
+  function normalize(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function getChannelFromLocation() {
+    var searchChannel = new URLSearchParams(window.location.search || '').get('channel');
+    if (searchChannel) {
+      return normalize(searchChannel);
+    }
+
+    var hash = window.location.hash || '';
+    var queryIndex = hash.indexOf('?');
+    if (queryIndex === -1) {
+      return 'casezap';
+    }
+
+    return normalize(new URLSearchParams(hash.slice(queryIndex + 1)).get('channel')) || 'casezap';
+  }
+
+  function shouldHideWabaActions(channel) {
+    return !!channel && channel !== 'waba';
+  }
+
+  function matchesBlockedLabel(element) {
+    var ownText = '';
+    Array.prototype.forEach.call(element.childNodes || [], function (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        ownText += ' ' + node.nodeValue;
+      }
+    });
+
+    var text = [
+      ownText,
+      element.getAttribute && element.getAttribute('title'),
+      element.getAttribute && element.getAttribute('aria-label')
+    ].join(' ');
+
+    return blockedWabaLabels.some(function (pattern) {
+      return pattern.test(text);
+    });
+  }
+
+  function findSmallContainer(element) {
+    var candidate = element;
+    var current = element;
+
+    for (var depth = 0; depth < 5 && current && current.parentElement; depth += 1) {
+      var parent = current.parentElement;
+      var textLength = String(parent.textContent || '').trim().length;
+      var childCount = parent.children ? parent.children.length : 0;
+
+      if (textLength > 0 && textLength <= 140 && childCount <= 8) {
+        candidate = parent;
+      }
+
+      if (
+        parent.tagName === 'BUTTON' ||
+        parent.tagName === 'LI' ||
+        /action|menu|item|row/i.test(parent.className || '')
+      ) {
+        candidate = parent;
+      }
+
+      current = parent;
+    }
+
+    return candidate;
+  }
+
+  function setHidden(element, hidden) {
+    if (!element) {
+      return;
+    }
+
+    if (hidden) {
+      element.setAttribute('data-chatcase-channel-hidden', 'waba-only');
+      element.style.display = 'none';
+      return;
+    }
+
+    if (element.getAttribute('data-chatcase-channel-hidden') === 'waba-only') {
+      element.removeAttribute('data-chatcase-channel-hidden');
+      element.style.display = '';
+    }
+  }
+
+  function updateBadge(channel) {
+    var existing = document.getElementById('chatcase-cds-channel-badge');
+    if (!channel) {
+      if (existing) {
+        existing.remove();
+      }
+      return;
+    }
+
+    if (!existing) {
+      existing = document.createElement('div');
+      existing.id = 'chatcase-cds-channel-badge';
+      existing.style.cssText = 'position:fixed;top:76px;right:18px;z-index:2147483647;padding:7px 10px;border:1px solid rgba(43,149,233,.35);border-radius:999px;background:#fff;color:#1f3550;font:600 12px/1.2 Arial,sans-serif;box-shadow:0 6px 18px rgba(31,53,80,.12)';
+      document.body.appendChild(existing);
+    }
+
+    existing.textContent = 'Canal do fluxo: ' + (channel === 'casezap' ? 'CaseZap' : channel === 'waba' ? 'WABA / Meta' : channel);
+  }
+
+  function applyGuard() {
+    var channel = getChannelFromLocation();
+    var hideWaba = shouldHideWabaActions(channel);
+    var hiddenTargets = [];
+
+    updateBadge(channel);
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-chatcase-channel-hidden="waba-only"]'), function (element) {
+      setHidden(element, false);
+    });
+
+    if (!hideWaba) {
+      return;
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('body *'), function (element) {
+      if (matchesBlockedLabel(element)) {
+        hiddenTargets.push(findSmallContainer(element));
+      }
+    });
+
+    hiddenTargets.forEach(function (element) {
+      setHidden(element, true);
+    });
+  }
+
+  function start() {
+    applyGuard();
+    observer = new MutationObserver(function () {
+      window.clearTimeout(observer._chatcaseTimer);
+      observer._chatcaseTimer = window.setTimeout(applyGuard, 80);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    window.setInterval(function () {
+      var channel = getChannelFromLocation();
+      if (channel !== lastChannel) {
+        lastChannel = channel;
+        applyGuard();
+      }
+    }, 500);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+}());
+EOF
+
+  if [ -f "$ROOT/index.html" ] && ! grep -q "chatcase-cds-channel-guard.js" "$ROOT/index.html"; then
+    sed -i 's#</body>#<script src="chatcase-cds-channel-guard.js?v=20260525"></script></body>#' "$ROOT/index.html"
+  fi
+}
+
 patch_static_text
 
 for lang in "$ROOT"/assets/i18n/*.json; do
   patch_i18n "$lang"
 done
+
+patch_channel_guard

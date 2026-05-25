@@ -165,6 +165,11 @@ async function run() {
   const flow = readFlow(flowPath);
   const chatbot = createChatbot(flow);
 
+  assert.deepStrictEqual(flow.attributes.channels, ['whatsapp', 'casezap'], 'flow should only advertise compatible session channels');
+  assert(!flow.attributes.channels.includes('telegram'), 'flow should not advertise Telegram without a compatible translator');
+  assert.strictEqual(flow.attributes.channelCompatibility.casezap.status, 'supported', 'flow should declare CaseZap compatibility');
+  assert.strictEqual(flow.attributes.channelCompatibility.whatsapp.status, 'supported', 'flow should declare WhatsApp session compatibility');
+
   /*
    * AC: Usuario consegue montar um fluxo de automacao de mensagens para canais como WhatsApp.
    * Behavior: Mensagem do usuario -> motor Tybot resolve bloco -> resposta observavel do chatbot.

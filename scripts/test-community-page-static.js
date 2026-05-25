@@ -39,6 +39,7 @@ assert(js.includes('/api/modules/templates/public/community'), 'JS should keep c
 assert(js.includes('template='), 'JS should support public template query links');
 assert(js.includes('/dashboard/#/projects?'), 'JS should route template installs through the protected projects page');
 assert(js.includes('install=1&source=community'), 'JS should preserve direct community install intent');
+assert(js.includes('&channel='), 'JS should carry selected channel into template install links');
 assert(js.includes('chatcase-ecommerce-orders'), 'JS fallback should include ecommerce template');
 assert(js.includes('chatcase-clinic-scheduling'), 'JS fallback should include clinic template');
 assert(js.includes('chatcase-restaurant-delivery'), 'JS fallback should include restaurant delivery template');
@@ -49,5 +50,12 @@ assert(nginx.includes('location /community/'), 'Nginx should serve /community/')
 assert(nginx.includes('try_files $uri $uri/ /community/index.html'), 'Nginx should fallback to community index');
 assert(nginx.includes("script-src 'self'"), 'Nginx CSP should avoid unsafe inline scripts for community');
 assert(compose.includes('./public/community:/usr/share/nginx/html/community:ro'), 'Compose should mount community static files into proxy');
+assert(compose.includes('./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro'), 'Compose should run CDS rebrand patch');
+
+const cdsRebrand = read(path.join(root, 'cds-rebrand.sh'));
+assert(cdsRebrand.includes('chatcase-cds-channel-guard.js'), 'CDS rebrand should inject channel compatibility guard');
+assert(cdsRebrand.includes('Template WABA'), 'CDS rebrand should rename WABA-specific actions');
+assert(cdsRebrand.includes("return 'casezap';"), 'CDS guard should hide WABA-only actions by default when channel is missing');
+assert(cdsRebrand.includes('waba\\s+por\\s+segmento'), 'CDS guard should hide WABA segment actions on non-WABA channels');
 
 console.log('OK community page static checks');

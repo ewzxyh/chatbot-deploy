@@ -46,12 +46,12 @@
       name: 'ChatCase WhatsApp menu basico',
       title: 'Menu basico para WhatsApp',
       description: 'Fluxo inicial de automacao para canais de mensagem: saudacao, menu numerico, planos e encaminhamento para atendimento humano.',
-      short_description: 'Menu inicial para WhatsApp, CaseZap e Telegram com saudacao, opcoes numericas e handoff para atendimento humano.',
+      short_description: 'Menu inicial para WhatsApp e CaseZap com saudacao, opcoes numericas e handoff para atendimento humano.',
       type: 'tilebot',
       subtype: 'chatbot',
       mainCategory: 'Atendimento',
       bigImage: '/dashboard/assets/img/logos/chatcase-logo.svg',
-      tags: ['whatsapp', 'casezap', 'telegram', 'atendimento'],
+      tags: ['whatsapp', 'casezap', 'atendimento'],
       certifiedTags: [
         { name: 'WhatsApp', color: '#25833e' },
         { name: 'CaseZap', color: '#0049bd' }
@@ -59,10 +59,11 @@
       templateFeatures: [
         'Saudacao automatica com menu numerico',
         'Respostas para planos e atendimento humano',
-        'Compatibilidade inicial com WhatsApp, CaseZap e Telegram'
+        'Compatibilidade inicial com WhatsApp e CaseZap'
       ],
       attributes: {
-        channels: ['whatsapp', 'casezap', 'telegram']
+        channels: ['whatsapp', 'casezap'],
+        availableChannels: ['whatsapp', 'casezap']
       },
       intentsCount: 5
     },
@@ -314,7 +315,8 @@
     var id = String(item._id || item.id || item.bot_id || item.uid || '').trim();
     var certifiedTags = Array.isArray(item.certifiedTags) ? item.certifiedTags : [];
     var rawTags = Array.isArray(item.tags) ? item.tags : [];
-    var explicitChannels = item.attributes && Array.isArray(item.attributes.channels) ? item.attributes.channels : [];
+    var explicitChannels = item.attributes && Array.isArray(item.attributes.availableChannels) ? item.attributes.availableChannels :
+      item.attributes && Array.isArray(item.attributes.channels) ? item.attributes.channels : [];
     var certifiedTagNames = certifiedTags.map(function (tag) { return tag && tag.name; });
     var channelCandidates = explicitChannels.concat(certifiedTagNames).concat(rawTags.filter(function (tag) {
       return KNOWN_CHANNELS.indexOf(String(tag || '').trim().toLowerCase()) !== -1;
@@ -357,8 +359,9 @@
       features.push(intentsCount + ' intents de automacao importaveis');
     }
 
-    if (item.attributes && Array.isArray(item.attributes.channels)) {
-      features.push('Canais suportados: ' + item.attributes.channels.map(titleCase).join(', '));
+    if (item.attributes && (Array.isArray(item.attributes.availableChannels) || Array.isArray(item.attributes.channels))) {
+      var channels = Array.isArray(item.attributes.availableChannels) ? item.attributes.availableChannels : item.attributes.channels;
+      features.push('Canais suportados: ' + channels.map(titleCase).join(', '));
     }
 
     features.push('Pronto para editar no construtor visual');
@@ -531,23 +534,28 @@
   }
 
   function hydrateDetail(id) {
-    if (state.detailById[id]) {
+    var channel = getSelectedChannelForTemplate(findTemplate(id));
+    var cacheKey = id + ':' + channel;
+
+    if (state.detailById[cacheKey]) {
       return;
     }
 
-    fetchJson(ENDPOINTS.templates + '/' + encodeURIComponent(id))
+    fetchJson(ENDPOINTS.templates + '/' + encodeURIComponent(id) + '?channel=' + encodeURIComponent(channel))
       .then(function (payload) {
-        state.detailById[id] = normalizeTemplate(Object.assign({}, findTemplate(id) ? findTemplate(id).source : {}, payload, { _id: id }));
+        state.detailById[cacheKey] = normalizeTemplate(Object.assign({}, findTemplate(id) ? findTemplate(id).source : {}, payload, { _id: id }));
         renderDetail();
       })
       .catch(function () {
-        state.detailById[id] = findTemplate(id);
+        state.detailById[cacheKey] = findTemplate(id);
         renderDetail();
       });
   }
 
   function renderDetail() {
-    var template = state.detailById[state.selectedId] || findTemplate(state.selectedId);
+    var baseTemplate = findTemplate(state.selectedId);
+    var cacheKey = state.selectedId + ':' + getSelectedChannelForTemplate(baseTemplate);
+    var template = state.detailById[cacheKey] || baseTemplate;
 
     if (!template) {
       els.detail.innerHTML = '<div class="detail-empty"><strong>Selecione um modelo</strong><span>Os detalhes e a acao de importacao aparecem aqui.</span></div>';
@@ -560,10 +568,11 @@
     var tags = template.channels.map(function (channel) {
       return '<span class="tag">' + escapeHtml(labelFor(channel)) + '</span>';
     }).join('');
-    var installParams = 'template=' + encodeURIComponent(template.id) + '&install=1&source=community';
+    var selectedChannel = getSelectedChannelForTemplate(template);
+    var installParams = 'template=' + encodeURIComponent(template.id) + '&install=1&source=community&channel=' + encodeURIComponent(selectedChannel);
     var installHref = '/dashboard/#/projects?' + installParams;
     var signupHref = '/dashboard/#/signup?' + installParams;
-    var exportHref = ENDPOINTS.templates + '/' + encodeURIComponent(template.id) + '/export';
+    var exportHref = ENDPOINTS.templates + '/' + encodeURIComponent(template.id) + '/export?channel=' + encodeURIComponent(selectedChannel);
 
     els.detail.innerHTML = '' +
       '<div class="detail-cover"><img src="' + escapeHtml(template.image) + '" alt=""></div>' +
@@ -580,7 +589,7 @@
           '<div><strong>' + escapeHtml(template.certified ? 'Sim' : 'Nao') + '</strong><span>Certificado</span></div>' +
         '</div>' +
         '<ul class="feature-list">' + featureItems + '</ul>' +
-        '<p class="install-note">Ao entrar no dashboard, escolha o projeto e o ChatCase importa este modelo automaticamente.</p>' +
+        '<p class="install-note">Ao entrar no dashboard, escolha o projeto e o ChatCase importa este modelo automaticamente para ' + escapeHtml(labelFor(selectedChannel)) + '.</p>' +
         '<div class="detail-actions">' +
           '<a class="button button-primary" href="' + installHref + '">Instalar no meu projeto</a>' +
           '<a class="button" href="' + signupHref + '">Criar conta com este modelo</a>' +
@@ -593,6 +602,28 @@
     copyButton.addEventListener('click', function () {
       copyPublicLink(template.id, copyButton);
     });
+  }
+
+  function getSelectedChannelForTemplate(template) {
+    if (!template || !Array.isArray(template.channels) || !template.channels.length) {
+      return 'casezap';
+    }
+
+    if (state.channel && state.channel !== 'all') {
+      var selected = template.channels.find(function (channel) {
+        return labelFor(channel).toLowerCase() === state.channel;
+      });
+
+      if (selected) {
+        return String(selected).trim().toLowerCase();
+      }
+    }
+
+    if (template.channels.some(function (channel) { return String(channel).trim().toLowerCase() === 'casezap'; })) {
+      return 'casezap';
+    }
+
+    return String(template.channels[0]).trim().toLowerCase();
   }
 
   function copyPublicLink(id, button) {

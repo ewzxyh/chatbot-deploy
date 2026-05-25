@@ -100,7 +100,9 @@ The smoke command writes, reads, verifies, and deletes a small object under `R2_
 
 ## Community Templates
 
-`/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically.
+`/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community&channel=<channel>`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically for the selected channel.
+
+ChatCase templates carry channel compatibility metadata. CaseZap and WhatsApp session flows do not expose WABA/Meta template publication actions during import. The current CDS container still uses the upstream `tiledesk/design-studio` image, so `cds-rebrand.sh` injects a small runtime guard that hides WABA-only actions when the flow URL contains `?channel=casezap`, `?channel=whatsapp`, or another non-WABA channel. A dedicated Design Studio fork/image remains the cleaner long-term path for deeper channel-specific editing rules.
 
 ## R2 Private Media Worker
 
