@@ -59,5 +59,9 @@ assert(cdsRebrand.includes('chatcase-cds-channel-guard.js'), 'CDS rebrand should
 assert(cdsRebrand.includes('Template WABA'), 'CDS rebrand should rename WABA-specific actions');
 assert(cdsRebrand.includes("return 'casezap';"), 'CDS guard should hide WABA-only actions by default when channel is missing');
 assert(cdsRebrand.includes('waba\\s+por\\s+segmento'), 'CDS guard should hide WABA segment actions on non-WABA channels');
+assert(cdsRebrand.includes('isUnsafeHiddenTarget'), 'CDS guard should avoid hiding full action overlays');
+assert(cdsRebrand.includes('chatcase-cds-runtime-fixes'), 'CDS guard should inject runtime overlay fixes');
+assert(cdsRebrand.includes('removeExternalSplashFrames'), 'CDS guard should remove external splash iframes blocked by CSP');
+assert(cdsRebrand.includes('20260525-cds-hover1'), 'CDS guard version should be bumped after runtime hover fixes');
 
 console.log('OK community page static checks');

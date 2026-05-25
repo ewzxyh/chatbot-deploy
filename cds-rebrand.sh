@@ -388,6 +388,7 @@ patch_channel_guard() {
   var lastLocation = '';
   var pendingMutationRoots = [];
   var mutationWorkScheduled = false;
+  var runtimeFixStylesInjected = false;
   var textTranslations = {
     'ChatCase Design Studio': 'ChatCase Est\u00fadio de Fluxos',
     'Design Studio': 'Est\u00fadio de Fluxos',
@@ -541,35 +542,52 @@ patch_channel_guard() {
     });
   }
 
+  function isUnsafeHiddenTarget(element) {
+    if (!element || element === document.body || element === document.documentElement) {
+      return true;
+    }
+
+    return /\b(cdk-overlay|mat-menu-panel|mat-menu-content|sat-popover|cdk-virtual-scroll|cds-canvas)\b/i.test(String(element.className || ''));
+  }
+
   function findSmallContainer(element) {
-    var candidate = element;
     var current = element;
+    var fallback = element;
 
-    for (var depth = 0; depth < 5 && current && current.parentElement; depth += 1) {
-      var parent = current.parentElement;
-      var textLength = String(parent.textContent || '').trim().length;
-      var childCount = parent.children ? parent.children.length : 0;
+    for (var depth = 0; depth < 6 && current; depth += 1) {
+      var className = String(current.className || '');
+      var role = current.getAttribute && current.getAttribute('role');
+      var textLength = String(current.textContent || '').trim().length;
+      var childCount = current.children ? current.children.length : 0;
 
-      if (textLength > 0 && textLength <= 140 && childCount <= 8) {
-        candidate = parent;
+      if (!isUnsafeHiddenTarget(current) && textLength > 0 && textLength <= 140 && childCount <= 8) {
+        fallback = current;
       }
 
       if (
-        parent.tagName === 'BUTTON' ||
-        parent.tagName === 'LI' ||
-        /action|menu|item|row/i.test(parent.className || '')
+        !isUnsafeHiddenTarget(current) &&
+        (
+          current.tagName === 'BUTTON' ||
+          current.tagName === 'LI' ||
+          role === 'menuitem' ||
+          /\b(mat-menu-item|menu-item|dropdown-item|action-row|action-item|action-box)\b/i.test(className)
+        )
       ) {
-        candidate = parent;
+        return current;
       }
 
-      current = parent;
+      current = current.parentElement;
     }
 
-    return candidate;
+    return fallback;
   }
 
   function setHidden(element, hidden) {
     if (!element) {
+      return;
+    }
+
+    if (hidden && isUnsafeHiddenTarget(element)) {
       return;
     }
 
@@ -602,6 +620,95 @@ patch_channel_guard() {
     }
 
     existing.textContent = 'Canal do fluxo: ' + (channel === 'casezap' ? 'CaseZap' : channel === 'waba' ? 'WABA / Meta' : channel);
+  }
+
+  function injectRuntimeFixStyles() {
+    if (runtimeFixStylesInjected || !document.head) {
+      return;
+    }
+
+    var style = document.createElement('style');
+    style.id = 'chatcase-cds-runtime-fixes';
+    style.textContent = [
+      '#chatcase-cds-channel-badge{pointer-events:none}',
+      '.cdk-overlay-container{z-index:2147483000!important;pointer-events:none!important}',
+      '.cdk-overlay-pane,.mat-menu-panel,.mat-menu-content,.sat-popover-container,.sat-popover{z-index:2147483001!important;pointer-events:auto!important}',
+      '.welcome_video iframe[src*="youtube.com"],.welcome_video iframe[src*="youtu.be"],.welcome_video iframe[src*="vimeo.com"]{display:none!important}'
+    ].join('\n');
+    document.head.appendChild(style);
+    runtimeFixStylesInjected = true;
+  }
+
+  function ensureOverlayLayering() {
+    var selector = '.cdk-overlay-container,[id^="cdk-overlay"],.cdk-overlay-pane,.mat-menu-panel,.mat-menu-content,.sat-popover-container,.sat-popover';
+    Array.prototype.forEach.call(document.querySelectorAll(selector), function (element) {
+      if (element.className && /\bcdk-overlay-container\b/i.test(String(element.className))) {
+        element.style.pointerEvents = 'none';
+      } else {
+        element.style.pointerEvents = 'auto';
+      }
+      element.style.zIndex = '2147483001';
+    });
+  }
+
+  function removeExternalSplashFrames(root) {
+    var elementRoot = getElementRoot(root);
+    var selector = 'iframe[src*="youtube.com"], iframe[src*="youtu.be"], iframe[src*="vimeo.com"]';
+
+    if (!elementRoot) {
+      return;
+    }
+
+    Array.prototype.forEach.call(elementRoot.querySelectorAll ? elementRoot.querySelectorAll(selector) : [], function (frame) {
+      var container = frame.closest && (frame.closest('.welcome_video') || frame.closest('.welcome_video_wpr'));
+      if (container) {
+        container.remove();
+        return;
+      }
+      frame.remove();
+    });
+  }
+
+  function isPaletteCategory(element) {
+    var text = collapseWhitespace(
+      (element.textContent || '') + ' ' +
+      (element.getAttribute && (element.getAttribute('aria-label') || element.getAttribute('title') || ''))
+    );
+
+    return /^(Mais usadas|Most used|AI|Fluxo|Flow|Integrações|Integrations|Especiais|Special)$/i.test(text);
+  }
+
+  function stabilizeActionPalette(root) {
+    var elementRoot = getElementRoot(root);
+    var selector = 'button,[role="button"],[role="menuitem"],.mat-menu-item,[class*="trigger"],[class*="menu"]';
+
+    injectRuntimeFixStyles();
+    ensureOverlayLayering();
+
+    if (!elementRoot || !elementRoot.querySelectorAll) {
+      return;
+    }
+
+    Array.prototype.forEach.call(elementRoot.querySelectorAll(selector), function (element) {
+      if (!isPaletteCategory(element) || element.getAttribute('data-chatcase-palette-stabilized') === '1') {
+        return;
+      }
+
+      element.setAttribute('data-chatcase-palette-stabilized', '1');
+      ['mouseenter', 'mouseover', 'mousemove'].forEach(function (eventName) {
+        element.addEventListener(eventName, function () {
+          if (element.focus) {
+            try {
+              element.focus({ preventScroll: true });
+            } catch (error) {
+              element.focus();
+            }
+          }
+          window.setTimeout(ensureOverlayLayering, 0);
+          window.setTimeout(ensureOverlayLayering, 80);
+        }, { passive: true });
+      });
+    });
   }
 
   function collapseWhitespace(value) {
@@ -786,8 +893,12 @@ patch_channel_guard() {
 
     mutationWorkScheduled = false;
     updateBadge(channel);
+    injectRuntimeFixStyles();
+    ensureOverlayLayering();
 
     roots.forEach(function (root) {
+      removeExternalSplashFrames(root);
+      stabilizeActionPalette(root);
       translatePortuguese(root);
       if (hideWaba) {
         collectBlockedTargets(root, hiddenTargets);
@@ -818,6 +929,9 @@ patch_channel_guard() {
     var hiddenTargets = [];
 
     updateBadge(channel);
+    injectRuntimeFixStyles();
+    removeExternalSplashFrames(document.body);
+    stabilizeActionPalette(document.body);
     translatePortuguese();
 
     Array.prototype.forEach.call(document.querySelectorAll('[data-chatcase-channel-hidden="waba-only"]'), function (element) {
@@ -876,9 +990,9 @@ patch_channel_guard() {
 EOF
 
   if [ -f "$ROOT/index.html" ] && grep -q "chatcase-cds-channel-guard.js" "$ROOT/index.html"; then
-    sed -i 's#chatcase-cds-channel-guard.js?v=[A-Za-z0-9._-]*#chatcase-cds-channel-guard.js?v=20260525-ptbr8#g' "$ROOT/index.html"
+    sed -i 's#chatcase-cds-channel-guard.js?v=[A-Za-z0-9._-]*#chatcase-cds-channel-guard.js?v=20260525-cds-hover1#g' "$ROOT/index.html"
   elif [ -f "$ROOT/index.html" ]; then
-    sed -i 's#</body>#<script src="chatcase-cds-channel-guard.js?v=20260525-ptbr8"></script></body>#' "$ROOT/index.html"
+    sed -i 's#</body>#<script src="chatcase-cds-channel-guard.js?v=20260525-cds-hover1"></script></body>#' "$ROOT/index.html"
   fi
 }
 
