@@ -49,7 +49,7 @@ SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --
 
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
 
-The `/chat/` service is built from the local `../chatcase-chat21-ionic` fork. Keep that repo beside this deploy repo before running `docker compose up --build`; the official image is left commented in `docker-compose.yml` only as an upstream reference.
+The `/chat/` service is built from the local `../chatcase-chat21-ionic` fork. The `/cds/` flow builder is built from the local `../chatcase-design-studio` fork. Keep those repos beside this deploy repo before running `docker compose up --build`; the official images are left commented in `docker-compose.yml` only as upstream references.
 
 In production, only the proxy port should be published. `docker-compose.prod.yml` resets inherited internal service ports with `ports: !reset []`, so Mongo, Redis, RabbitMQ, server, chat, dashboard, Qdrant, workers, and the incident receiver are reachable only on the Docker network. Use the proxy for every public route.
 
@@ -102,7 +102,7 @@ The smoke command writes, reads, verifies, and deletes a small object under `R2_
 
 `/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community&channel=<channel>`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically for the selected channel.
 
-ChatCase templates carry channel compatibility metadata. CaseZap and WhatsApp session flows do not expose WABA/Meta template publication actions during import. The current CDS container still uses the upstream `tiledesk/design-studio` image, so `cds-rebrand.sh` injects a small runtime guard that hides WABA-only actions when the flow URL contains `?channel=casezap`, `?channel=whatsapp`, or another non-WABA channel. A dedicated Design Studio fork/image remains the cleaner long-term path for deeper channel-specific editing rules.
+ChatCase templates carry channel compatibility metadata. CaseZap and WhatsApp session flows do not expose WABA/Meta template publication actions during import. The CDS container is built from the local `../chatcase-design-studio` fork; `cds-rebrand.sh` still injects the existing runtime guard that hides WABA-only actions when the flow URL contains `?channel=casezap`, `?channel=whatsapp`, or another non-WABA channel. Deeper channel-specific editing rules should now move into the fork instead of growing more bundle patches.
 
 ## R2 Private Media Worker
 

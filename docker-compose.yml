@@ -49,7 +49,8 @@ services:
       exec nginx -g 'daemon off;'"
     restart: unless-stopped
   cds:
-    image: "tiledesk/design-studio:1.39.9-rc3"
+    build: ../chatcase-design-studio
+    # image: "tiledesk/design-studio:1.39.9-rc3"
     container_name: cds
     volumes:
       - ./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro
