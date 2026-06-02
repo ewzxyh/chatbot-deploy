@@ -233,6 +233,8 @@ services:
       - EMAIL_PASSWORD
       - EMAIL_FROM_ADDRESS
       - "EMAIL_BASEURL=${EXTERNAL_BASE_URL:-http://localhost:8081}/dashboard"
+      - "EXTERNAL_BASE_URL=${EXTERNAL_BASE_URL:-http://localhost:8081}"
+      - "API_URL=${EXTERNAL_BASE_URL:-http://localhost:8081}/api"
       - "WEBHOOK_ORIGIN=${EXTERNAL_BASE_URL:-http://localhost:8081}/api/"
       - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-http://localhost:8081}/widget/"
       - WS_SERVER_PATH

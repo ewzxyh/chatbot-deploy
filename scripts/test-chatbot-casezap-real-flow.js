@@ -9,6 +9,7 @@ const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
 const defaultFlowPath = path.join(rootDir, 'automations', 'chatbot-flows', 'whatsapp-menu-basic.json');
+const mongoContainer = process.env.MONGO_CONTAINER || 'mongo';
 
 function parseArgs(argv) {
   const args = {};
@@ -101,15 +102,20 @@ function mongoJson(jsExpression) {
     const result = (${jsExpression});
     print(JSON.stringify(result));
   `;
-  const result = childProcess.spawnSync('docker', [
+  const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+  const mongoArgs = [
     'exec',
-    'mongo',
+    mongoContainer,
     'mongosh',
     '--quiet',
-    'tiledesk',
+  ];
+  mongoArgs.push(mongoUri || 'tiledesk');
+  mongoArgs.push(
     '--eval',
     script
-  ], {
+  );
+
+  const result = childProcess.spawnSync('docker', mongoArgs, {
     encoding: 'utf8'
   });
 
