@@ -163,6 +163,46 @@ async function checkDashboard(ctx) {
   });
 }
 
+async function checkCommunity(ctx) {
+  const response = await request(ctx, 'GET', ctx.communityPath);
+  if (!response.ok) {
+    return result('fail', 'community', `HTTP ${response.statusCode}`, { path: ctx.communityPath });
+  }
+
+  const missing = [];
+  if (!response.text.includes('ChatCase Community')) missing.push('title');
+  if (!response.text.includes('/community/assets/community.css')) missing.push('css');
+  if (!response.text.includes('/community/assets/community.js')) missing.push('js');
+  if (missing.length) {
+    return result('fail', 'community', `missing expected markers: ${missing.join(', ')}`, {
+      path: ctx.communityPath,
+    });
+  }
+
+  const assetResponse = await request(ctx, 'GET', '/community/assets/community.js');
+  if (!assetResponse.ok) {
+    return result('fail', 'community asset', `HTTP ${assetResponse.statusCode}`, {
+      path: '/community/assets/community.js',
+    });
+  }
+
+  const assetMissing = [];
+  if (!assetResponse.text.includes('/api/modules/templates/public/templates')) assetMissing.push('templates api');
+  if (!assetResponse.text.includes('/api/modules/templates/public/community')) assetMissing.push('community api');
+  if (!assetResponse.text.includes('install=1&source=community')) assetMissing.push('install intent');
+  if (assetMissing.length) {
+    return result('fail', 'community asset', `missing expected markers: ${assetMissing.join(', ')}`, {
+      path: '/community/assets/community.js',
+    });
+  }
+
+  return result('ok', 'community', `HTTP ${response.statusCode}`, {
+    path: ctx.communityPath,
+    assetPath: '/community/assets/community.js',
+    contentType: response.headers['content-type'] || null,
+  });
+}
+
 async function checkSummary(ctx) {
   const response = await request(ctx, 'GET', `${ctx.apiPrefix}/sadmin/health/summary`, {
     headers: { authorization: ctx.authorization },
@@ -323,9 +363,10 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   readEnvFile(args.env);
 
+  const publicOnly = Boolean(args['public-only'] || process.env.SMOKE_PUBLIC_ONLY === 'true');
   const email = firstValue([args['admin-email'], process.env.SMOKE_ADMIN_EMAIL, process.env.ADMIN_EMAIL, process.env.SUPER_ADMIN_EMAILS && process.env.SUPER_ADMIN_EMAILS.split(',')[0]]);
   const password = firstValue([args['admin-password'], process.env.SMOKE_ADMIN_PASSWORD, process.env.ADMIN_PASSWORD]);
-  if (!email || !password) {
+  if (!publicOnly && (!email || !password)) {
     throw new Error('Missing superadmin credentials. Use --admin-email/--admin-password or SMOKE_ADMIN_EMAIL/SMOKE_ADMIN_PASSWORD.');
   }
 
@@ -333,7 +374,8 @@ async function main() {
     baseUrl: normalizeBaseUrl(args['base-url']),
     apiPrefix: normalizePath(firstValue([args['api-prefix'], process.env.SMOKE_API_PREFIX]), '/api').replace(/\/+$/, ''),
     dashboardPath: normalizePath(firstValue([args['dashboard-path'], process.env.SMOKE_DASHBOARD_PATH]), '/dashboard/'),
-    authorization: authHeader(email, password),
+    communityPath: normalizePath(firstValue([args['community-path'], process.env.SMOKE_COMMUNITY_PATH]), '/community/'),
+    authorization: publicOnly ? null : authHeader(email, password),
     timeoutMs: Number(firstValue([args['timeout-ms'], process.env.SMOKE_TIMEOUT_MS, '15000'])),
     skipStorageTest: Boolean(args['skip-storage-test']),
     skipAlertTest: Boolean(args['skip-alert-test']),
@@ -345,15 +387,21 @@ async function main() {
     throw new Error('SMOKE_TIMEOUT_MS/--timeout-ms must be an integer >= 1000.');
   }
 
-  const checks = [
+  let checks = [
     checkDashboard,
-    checkSummary,
-    checkQueues,
-    checkStorage,
-    checkAlertNotification,
+    checkCommunity,
   ];
-  if (ctx.testSentry) {
-    checks.push(checkSentry);
+
+  if (!publicOnly) {
+    checks = checks.concat([
+      checkSummary,
+      checkQueues,
+      checkStorage,
+      checkAlertNotification,
+    ]);
+    if (ctx.testSentry) {
+      checks.push(checkSentry);
+    }
   }
 
   const results = [];

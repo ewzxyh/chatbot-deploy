@@ -7,7 +7,7 @@ services:
   dashboard:
     build: ../tiledesk-dashboard
     #image: "tiledesk/tiledesk-dashboard:2.7.134-stage"
-    container_name: dashboard
+    container_name: chatcase-dashboard
     volumes:
       - ./dashboard-rebrand.sh:/docker-entrypoint.d/99-dashboard-rebrand.sh:ro
     environment:
@@ -51,7 +51,7 @@ services:
   cds:
     build: ../chatcase-design-studio
     # image: "tiledesk/design-studio:1.39.9-rc3"
-    container_name: cds
+    container_name: chatcase-cds
     volumes:
       - ./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro
       - ../tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
@@ -97,7 +97,7 @@ services:
     restart: unless-stopped
   webwidget:
     image: "chat21/chat21-web-widget:5.1.2"
-    container_name: chat21-web-widget
+    container_name: chatcase-chat21-web-widget
     ports:
       - "127.0.0.1:4200:80"
     environment:
@@ -128,7 +128,7 @@ services:
   ionic:
     build: ../chatcase-chat21-ionic
     # image: "chat21/chat21-ionic:3.4.22"
-    container_name: chat21-ionic
+    container_name: chatcase-chat21-ionic
     volumes:
       - ./ionic-rebrand.sh:/docker-entrypoint.d/99-rebrand.sh:ro
       - ../tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/assets/icon/favicon.ico:ro
@@ -180,7 +180,7 @@ services:
     restart: unless-stopped
   chatbot:
     image: "tiledesk/tiledesk-chatbot:2.0.32-rc8"
-    container_name: chatbot
+    container_name: chatcase-chatbot
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - "API_ENDPOINT=http://server:3000"
@@ -206,7 +206,7 @@ services:
   server:
     build: ../tiledesk-server
     #image: "tiledesk/tiledesk-server:2.13.23-op1"
-    container_name: server
+    container_name: chatcase-server
     restart: always
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
@@ -267,6 +267,7 @@ services:
       - SENTRY_SERVER_NAME
       - "OPERATIONAL_STORAGE_CHECK_ENABLED=${OPERATIONAL_STORAGE_CHECK_ENABLED:-true}"
       - "OPERATIONAL_STORAGE_CHECK_TTL_SECONDS=${OPERATIONAL_STORAGE_CHECK_TTL_SECONDS:-300}"
+      - "GLOBAL_SECRET=${GLOBAL_SECRET:-nodeauthsecret}"
       - "APPS_ACCESS_TOKEN_SECRET=${APPS_ACCESS_TOKEN_SECRET:-nodeauthsecret}"
       - "SESSION_SECRET=${SESSION_SECRET:REDACTED_SECRET}"
       - BOOT_LOADING=true
@@ -332,6 +333,8 @@ services:
       - QUOTES_ENABLED=true
       - TRIAL_MODE_ENABLED=true
       - "ADMIN_EMAIL=${ADMIN_EMAIL:redacted@example.invalid}"
+      - "ADMIN_PASSWORD=${ADMIN_PASSWORD:-adminadmin}"
+      - "SUPER_PASSWORD=${SUPER_PASSWORD:-superadmin}"
       - "SUPER_ADMIN_EMAILS=${SUPER_ADMIN_EMAILS:redacted@example.invalid,redacted@example.invalid}"
       - CASEPAY_API_KEY
       - CASEPAY_CONNECTION_ID
@@ -365,7 +368,7 @@ services:
           start_period: 40s
   incident-automation:
     image: node:20-alpine
-    container_name: incident-automation
+    container_name: chatcase-incident-automation
     working_dir: /app
     command: ["node", "scripts/incident-automation-webhook.js"]
     volumes:
@@ -388,7 +391,7 @@ services:
   chat21httpserver:
     image: "chat21/chat21-http-server:0.2.37"
     #image: chat21http-gab:0.1.11
-    container_name: chat21httpserver
+    container_name: chatcase-chat21httpserver
     restart: unless-stopped
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
@@ -419,7 +422,7 @@ services:
       - "127.0.0.1:8004:8004"
   chat21server:
     image: "chat21/chat21-server:0.2.53"
-    container_name: chat21server
+    container_name: chatcase-chat21server
     restart: unless-stopped
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
@@ -442,7 +445,7 @@ services:
         condition: service_started
   backend-llm-train:
     image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
-    container_name: backend-llm-train
+    container_name: chatcase-backend-llm-train
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - TIMEOUT=240
@@ -470,7 +473,7 @@ services:
     restart: unless-stopped
   backend-llm-qa:
     image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
-    container_name: backend-llm-qa
+    container_name: chatcase-backend-llm-qa
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - TIMEOUT=240
@@ -497,10 +500,11 @@ services:
     restart: unless-stopped
   proxy:
     image: "tiledesk/tiledesk-docker-proxy:v1.1.2"
-    container_name: tiledesk-docker-proxy
+    container_name: chatcase-proxy
     volumes:
       - ./proxy-nginx.conf:/etc/nginx/nginx.conf:ro
       - ./public/community:/usr/share/nginx/html/community:ro
+      - ./public/legal:/usr/share/nginx/html/legal:ro
     ports:
       - "${PROXY_HTTP_BIND:-8081}:80"
     depends_on:
@@ -531,7 +535,7 @@ services:
     restart: unless-stopped
   rabbitmq:
     image: chat21/chat21-rabbitmq
-    container_name: rabbitmq
+    container_name: chatcase-rabbitmq
     volumes:
       - ./rabbitmq-configure-and-start.sh:/usr/local/bin/chatcase-rabbitmq-configure-and-start.sh:ro
     environment:
@@ -540,7 +544,12 @@ services:
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:-admin}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:-change-me}"
       RABBITMQ_JWT_SECRET: "${CHAT21_JWT_SECRET:-tokenKey}"
+      RABBITMQ_CLUSTER_NAME: "${RABBITMQ_CLUSTER_NAME:-chatcase}"
     command: ["/bin/sh", "/usr/local/bin/chatcase-rabbitmq-configure-and-start.sh"]
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
@@ -558,7 +567,7 @@ services:
     #     timeout: 15s
     #     retries: 1
   mongo:
-    container_name: mongo
+    container_name: chatcase-mongo
     image: "mongo:7.0.2"
     command: "--bind_ip_all"
     volumes:
@@ -579,7 +588,7 @@ services:
     #   timeout: 5s
     #   retries: 5
   redis:
-    container_name: redis
+    container_name: chatcase-redis
     image: "redis:7.0.5"
     volumes:
       - "redis-data:/data"

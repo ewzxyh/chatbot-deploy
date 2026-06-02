@@ -43,6 +43,7 @@ function extractYamlService(source, service) {
 function baseProductionEnv(overrides = {}) {
   const env = {
     EXTERNAL_BASE_URL: 'https://app.chatcase.com.br',
+    COMMUNITY_PUBLIC_URL: 'https://chatcase.com.br/community/',
     EXTERNAL_MQTT_BASE_URL: '',
     PROXY_HTTP_BIND: '80',
     FILE_STORAGE_DRIVER: 'r2',
@@ -106,15 +107,19 @@ function baseProductionEnv(overrides = {}) {
     AMQP_MANAGER_URL: '[REDACTED_CREDENTIAL_URL]',
     RABBITMQ_URI: '[REDACTED_CREDENTIAL_URL]',
     RABBITMQ_ADMIN_URI: '[REDACTED_CREDENTIAL_URL]',
+    GLOBAL_SECRET: 'REDACTED_SECRET',
     CHAT21_JWT_SECRET: 'REDACTED_SECRET',
     JWT_SECRET_KEY: 'ApiJwtSecretValue1234567890',
     APPS_ACCESS_TOKEN_SECRET: 'REDACTED_SECRET',
     SESSION_SECRET: 'REDACTED_SECRET',
-    GPTKEY: 'OpenAiProviderKeyValue1234567890',
+    AI_FEATURES_ENABLED: 'false',
+    GPTKEY: '',
     CHAT21_ADMIN_TOKEN: 'Chat21AdminTokenValue1234567890',
     PUSH_WH_CHAT21_API_ADMIN_TOKEN: 'PushApiAdminTokenValue1234567890',
     PUSH_WH_WEBHOOK_TOKEN: 'PushWebhookTokenValue1234567890',
     ADMIN_EMAIL: 'redacted@example.invalid',
+    ADMIN_PASSWORD: 'REDACTED_SECRET',
+    SUPER_PASSWORD: 'REDACTED_SECRET',
     SUPER_ADMIN_EMAILS: 'redacted@example.invalid',
     FB_APP_ID: '1234567890',
     FB_APP_SECRET: 'REDACTED_SECRET',
@@ -253,10 +258,23 @@ function testCheckerRequiresFinalSecrets() {
   assert.match(weak.stdout, /PUSH_WH_WEBHOOK_TOKEN/);
 
   const shared = runChecker(baseProductionEnv({
-    JWT_SECRET_KEY: 'Chat21JwtSecretValue1234567890',
+    GLOBAL_SECRET: 'REDACTED_SECRET',
+    APPS_ACCESS_TOKEN_SECRET: 'REDACTED_SECRET',
   }));
   assert.notStrictEqual(shared.status, 0, 'checker must reject shared JWT secrets');
-  assert.match(shared.stdout, /JWT_SECRET_KEY must be different from CHAT21_JWT_SECRET/);
+  assert.match(shared.stdout, /GLOBAL_SECRET must be different from CHAT21_JWT_SECRET/);
+
+  const appsSecretMismatch = runChecker(baseProductionEnv({
+    APPS_ACCESS_TOKEN_SECRET: 'REDACTED_SECRET',
+  }));
+  assert.notStrictEqual(appsSecretMismatch.status, 0, 'checker must reject apps secret mismatching the API JWT secret');
+  assert.match(appsSecretMismatch.stdout, /APPS_ACCESS_TOKEN_SECRET must match GLOBAL_SECRET/);
+
+  const sharedJwt = runChecker(baseProductionEnv({
+    JWT_SECRET_KEY: 'Chat21JwtSecretValue1234567890',
+  }));
+  assert.notStrictEqual(sharedJwt.status, 0, 'checker must reject shared internal JWT secrets');
+  assert.match(sharedJwt.stdout, /JWT_SECRET_KEY must be different from CHAT21_JWT_SECRET/);
 
   const badBilling = runChecker(baseProductionEnv({
     BILLING_LIFECYCLE_JOB_ENABLED: 'maybe',
@@ -265,6 +283,26 @@ function testCheckerRequiresFinalSecrets() {
   assert.notStrictEqual(badBilling.status, 0, 'checker must reject invalid billing lifecycle settings');
   assert.match(badBilling.stdout, /BILLING_LIFECYCLE_JOB_ENABLED/);
   assert.match(badBilling.stdout, /BILLING_SUSPEND_AFTER_DAYS/);
+
+  const aiWithoutKey = runChecker(baseProductionEnv({
+    AI_FEATURES_ENABLED: 'true',
+    GPTKEY: '',
+  }));
+  assert.notStrictEqual(aiWithoutKey.status, 0, 'checker must require GPTKEY only when AI features are enabled');
+  assert.match(aiWithoutKey.stdout, /AI_FEATURES_ENABLED=true requires GPTKEY/);
+
+  const aiWithKey = runChecker(baseProductionEnv({
+    AI_FEATURES_ENABLED: 'true',
+    GPTKEY: 'OpenAiProviderKeyValue1234567890',
+  }));
+  assert.strictEqual(aiWithKey.status, 0, aiWithKey.stdout + aiWithKey.stderr);
+
+  const badCommunityUrl = runChecker(baseProductionEnv({
+    COMMUNITY_PUBLIC_URL: 'http://app.chatcase.com.br/templates',
+  }));
+  assert.notStrictEqual(badCommunityUrl.status, 0, 'checker must reject invalid public community URL');
+  assert.match(badCommunityUrl.stdout, /COMMUNITY_PUBLIC_URL must use https/);
+  assert.match(badCommunityUrl.stdout, /COMMUNITY_PUBLIC_URL must point to the public \/community\/ page/);
 }
 
 testProxySecurityHeadersAndRateLimit();

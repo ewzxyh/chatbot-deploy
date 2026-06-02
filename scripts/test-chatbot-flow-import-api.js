@@ -242,6 +242,22 @@ async function run() {
     assert.strictEqual(byName.get('human_handoff').question, '2');
     assert.strictEqual(byName.get('human_handoff_alias_falar_atendente').question, 'Falar atendente');
     assert.strictEqual(byName.get('human_handoff_alias_atendente').question, 'Atendente');
+    assert(
+      !byName.get('human_handoff').answer.includes('\\agent'),
+      'human handoff should not leak routing commands to the user'
+    );
+    assert(
+      byName.get('human_handoff').actions.some((action) => action._tdActionType === 'agent'),
+      'human handoff should trigger Tiledesk agent routing'
+    );
+    assert(
+      byName.get('human_handoff_alias_falar_atendente').actions.some((action) => action._tdActionType === 'agent'),
+      'human handoff alias should preserve Tiledesk agent routing'
+    );
+    assert(
+      byName.get('human_handoff_alias_atendente').actions.some((action) => action._tdActionType === 'agent'),
+      'human handoff alias should preserve Tiledesk agent routing'
+    );
 
     /*
      * AC: Atualizar um fluxo existente deve preservar metadados ChatCase usados por canais nativos.

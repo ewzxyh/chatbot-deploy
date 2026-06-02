@@ -30,6 +30,7 @@ const compose = read(files.compose);
  * @category: deployment-static
  */
 assert(html.includes('ChatCase Community'), 'HTML should be branded ChatCase');
+assert(html.includes('https://chatcase.com.br/community/'), 'HTML should declare the final public community URL');
 assert(html.includes('/community/assets/community.css'), 'HTML should load local CSS');
 assert(html.includes('/community/assets/community.js'), 'HTML should load local JS');
 assert(html.includes('/dashboard/assets/img/logos/chatcase-logo.svg'), 'HTML should use local ChatCase logo');

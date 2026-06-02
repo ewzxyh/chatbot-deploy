@@ -30,7 +30,8 @@ Keep `.env`, backups, and local storage directories out of git.
 - Use `R2_*` for uploads and conversation attachments.
 - Prefer separate private R2 buckets for backups and uploads.
 - Revoke any R2 credentials that were shared during local testing before production.
-- Generate separate values for `CHAT21_JWT_SECRET`, `JWT_SECRET_KEY`, `APPS_ACCESS_TOKEN_SECRET`, and `SESSION_SECRET`.
+- Generate separate values for `GLOBAL_SECRET`, `CHAT21_JWT_SECRET`, `JWT_SECRET_KEY`, and `SESSION_SECRET`.
+- Set `APPS_ACCESS_TOKEN_SECRET` to the same value as `GLOBAL_SECRET`; the apps module validates dashboard user JWTs and the integrations page depends on this.
 - Fill `CHAT21_ADMIN_TOKEN`, `PUSH_WH_CHAT21_API_ADMIN_TOKEN`, and `PUSH_WH_WEBHOOK_TOKEN`; production must not fall back to the public dev defaults in `docker-compose.yml`.
 
 ## Production Setup
@@ -41,6 +42,7 @@ nano .env.production
 set -a; . ./.env.production; set +a
 node scripts/generate-rabbitmq-jwt.js "$CHAT21_JWT_SECRET" rabbitmq
 node scripts/check-production-env.js .env.production
+node scripts/test-community-page-static.js
 node scripts/r2-storage-smoke.js smoke --env .env.production
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -50,6 +52,17 @@ SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
 
 The `/chat/` service is built from the local `../chatcase-chat21-ionic` fork. The `/cds/` flow builder is built from the local `../chatcase-design-studio` fork. Keep those repos beside this deploy repo before running `docker compose up --build`; the official images are left commented in `docker-compose.yml` only as upstream references.
+
+`GPTKEY` is optional when `AI_FEATURES_ENABLED=false`. Leave it empty if ChatCase will not use AI, Knowledge Base, or RAG features in the first production cut. If those features are enabled later, set `AI_FEATURES_ENABLED=true`, fill `GPTKEY`, and rerun `node scripts/check-production-env.js .env.production`.
+
+`ADMIN_PASSWORD` is the bootstrap password used only when the Mongo volume is fresh and `BOOT_LOADING=true` creates the first superadmin user. Store it in a password manager. After the first login, rotate the password from the dashboard and keep the rotated value in the password manager. `SUPER_PASSWORD` is a separate emergency/master password used by upstream Tiledesk auth; always set it to a long random value in production so the upstream default is never active.
+
+For the authenticated production smoke, either rely on `ADMIN_PASSWORD` from the env file during first deploy or export the current superadmin password only for the current shell session:
+
+```bash
+export SMOKE_ADMIN_PASSWORD='<superadmin-password>'
+node scripts/production-smoke.js --env .env.production
+```
 
 In production, only the proxy port should be published. `docker-compose.prod.yml` resets inherited internal service ports with `ports: !reset []`, so Mongo, Redis, RabbitMQ, server, chat, dashboard, Qdrant, workers, and the incident receiver are reachable only on the Docker network. Use the proxy for every public route.
 
@@ -103,6 +116,28 @@ The smoke command writes, reads, verifies, and deletes a small object under `R2_
 `/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community&channel=<channel>`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically for the selected channel.
 
 ChatCase templates carry channel compatibility metadata. CaseZap and WhatsApp session flows do not expose WABA/Meta template publication actions during import. The CDS container is built from the local `../chatcase-design-studio` fork; `cds-rebrand.sh` still injects the existing runtime guard that hides WABA-only actions when the flow URL contains `?channel=casezap`, `?channel=whatsapp`, or another non-WABA channel. Deeper channel-specific editing rules should now move into the fork instead of growing more bundle patches.
+
+Before deploying or changing the public template page, run:
+
+```bash
+node scripts/test-community-page-static.js
+```
+
+The production smoke also checks `GET /community/` and `/community/assets/community.js`. Set `COMMUNITY_PUBLIC_URL=https://chatcase.com.br/community/` and keep `SMOKE_COMMUNITY_PATH=/community/` unless the public route changes intentionally.
+
+## Legal Pages
+
+The proxy serves the public legal pages required for Meta review and LGPD:
+
+- Privacy Policy: `https://app.chatcase.com.br/privacy`
+- Terms of Use: `https://app.chatcase.com.br/terms`
+- Data Deletion Instructions: `https://app.chatcase.com.br/data-deletion`
+
+Run the static check before deploying legal page changes:
+
+```bash
+node scripts/test-legal-pages-static.js
+```
 
 ## R2 Private Media Worker
 
@@ -269,23 +304,29 @@ Keep `INCIDENT_AUTOMATION_DRY_RUN=true` until the endpoint, secret, and routing 
 After each VPS deploy, run the smoke test from this repository:
 
 ```bash
+node scripts/production-smoke.js --env .env.production --public-only
 SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --env .env.production
 ```
 
 It checks the public/proxy path, not Docker internals:
 
 - `GET /dashboard/`
+- `GET /community/`
+- `GET /community/assets/community.js`
 - `GET /api/sadmin/health/summary`
 - `GET /api/sadmin/health/queues`
 - `POST /api/sadmin/health/storage/test`
 
 The script exits with code `1` if a required check fails. `WARN` is allowed for expected non-critical states. It does not send operational alert e-mails by default. To test the real alert destination, run with `--test-alert-notification` or `SMOKE_TEST_ALERT_NOTIFICATION=true`; that explicit alert check should return `OK ... status=sent` in production.
 
+Use `--public-only` first when DNS/TLS/proxy is the only thing being checked. It runs only public checks and does not require superadmin credentials.
+
 Useful overrides:
 
 ```bash
 node scripts/production-smoke.js \
   --base-url https://app.example.com \
+  --community-path /community/ \
   --admin-email redacted@example.invalid \
   --admin-password '<superadmin-password>' \
   --timeout-ms 15000

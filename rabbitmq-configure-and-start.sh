@@ -21,6 +21,12 @@ cat > "$ADVANCED_CONFIG_FILE" <<EOF
         {key_config, [
             {default_key, <<"legacy-token-key">>},
             {signing_keys, #{
+                <<"tiledesk-key">> =>
+                    {map, #{
+                        <<"alg">> => <<"HS256">>,
+                        <<"value">> => <<"$JWT_SECRET_ESCAPED">>,
+                        <<"kty">> => <<"MAC">>}
+                    },
                 <<"legacy-token-key">> =>
                     {map, #{
                         <<"alg">> => <<"HS256">>,
@@ -70,6 +76,7 @@ fi
 
 rabbitmqctl set_user_tags "$MANAGEMENT_USER" administrator
 rabbitmqctl set_permissions -p / "$MANAGEMENT_USER" ".*" ".*" ".*"
+rabbitmqctl set_cluster_name "${RABBITMQ_CLUSTER_NAME:-chatcase}"
 touch /tmp/chatcase-rabbitmq-ready
 
 wait "$RABBITMQ_PID"

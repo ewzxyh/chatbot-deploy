@@ -29,6 +29,7 @@ function readEnv(filePath) {
 
 const required = [
   'EXTERNAL_BASE_URL',
+  'COMMUNITY_PUBLIC_URL',
   'PROXY_HTTP_BIND',
   'FILE_STORAGE_DRIVER',
   'MONGO_INITDB_ROOT_USERNAME',
@@ -54,15 +55,17 @@ const required = [
   'AMQP_MANAGER_URL',
   'RABBITMQ_URI',
   'RABBITMQ_ADMIN_URI',
+  'GLOBAL_SECRET',
   'CHAT21_JWT_SECRET',
   'JWT_SECRET_KEY',
   'APPS_ACCESS_TOKEN_SECRET',
   'SESSION_SECRET',
-  'GPTKEY',
   'CHAT21_ADMIN_TOKEN',
   'PUSH_WH_CHAT21_API_ADMIN_TOKEN',
   'PUSH_WH_WEBHOOK_TOKEN',
   'ADMIN_EMAIL',
+  'ADMIN_PASSWORD',
+  'SUPER_PASSWORD',
   'SUPER_ADMIN_EMAILS',
   'FB_APP_ID',
   'FB_APP_SECRET',
@@ -99,6 +102,8 @@ const weakValues = new Set([
   'CHANGE_ME_CHAT21_ADMIN_TOKEN',
   'CHANGE_ME_PUSH_API_ADMIN_TOKEN',
   'CHANGE_ME_PUSH_WEBHOOK_TOKEN',
+  'CHANGE_ME_LONG_RANDOM_ADMIN_PASSWORD',
+  'CHANGE_ME_LONG_RANDOM_SUPER_PASSWORD',
   'CHANGE_ME_OPENAI_OR_PROVIDER_KEY',
   'CHANGE_ME_LONG_RANDOM_VERIFY_TOKEN',
   'CHANGE_ME_LONG_RANDOM_MEDIA_CDN_SIGNING_SECRET',
@@ -145,6 +150,12 @@ function assertUrlSafeSecret(env, key, errors) {
 function assertDifferent(env, leftKey, rightKey, errors) {
   if (hasValue(env, leftKey) && hasValue(env, rightKey) && env[leftKey] === env[rightKey]) {
     errors.push(`${leftKey} must be different from ${rightKey}`);
+  }
+}
+
+function assertSame(env, leftKey, rightKey, errors) {
+  if (hasValue(env, leftKey) && hasValue(env, rightKey) && env[leftKey] !== env[rightKey]) {
+    errors.push(`${leftKey} must match ${rightKey}`);
   }
 }
 
@@ -231,6 +242,15 @@ function main() {
     errors.push('EXTERNAL_BASE_URL must use https:// in production');
   }
 
+  if (env.COMMUNITY_PUBLIC_URL && !looksPlaceholder(env.COMMUNITY_PUBLIC_URL)) {
+    if (!env.COMMUNITY_PUBLIC_URL.startsWith('https://')) {
+      errors.push('COMMUNITY_PUBLIC_URL must use https:// in production');
+    }
+    if (!/\/community\/?$/.test(env.COMMUNITY_PUBLIC_URL)) {
+      errors.push('COMMUNITY_PUBLIC_URL must point to the public /community/ page');
+    }
+  }
+
   if (env.FILE_STORAGE_DRIVER && env.FILE_STORAGE_DRIVER !== 'r2') {
     errors.push('FILE_STORAGE_DRIVER should be r2 in production');
   }
@@ -278,6 +298,14 @@ function main() {
 
   if (isEnabled(env.BILLING_LIFECYCLE_EMAIL_ENABLED) && env.EMAIL_ENABLED !== 'true') {
     errors.push('BILLING_LIFECYCLE_EMAIL_ENABLED=true requires EMAIL_ENABLED=true');
+  }
+
+  if (env.AI_FEATURES_ENABLED && !['true', 'false'].includes(env.AI_FEATURES_ENABLED)) {
+    errors.push('AI_FEATURES_ENABLED must be true or false');
+  }
+
+  if (isEnabled(env.AI_FEATURES_ENABLED) && !hasValue(env, 'GPTKEY')) {
+    errors.push('AI_FEATURES_ENABLED=true requires GPTKEY');
   }
 
   if (isEnabled(env.BILLING_LIFECYCLE_JOB_ENABLED) && env.BILLING_LIFECYCLE_JOB_DRY_RUN === 'true') {
@@ -341,22 +369,28 @@ function main() {
     'MONGO_LOGS_PASSWORD',
     'MONGO_CHAT21_PASSWORD',
     'REDIS_PASSWORD',
+    'GLOBAL_SECRET',
     'CHAT21_JWT_SECRET',
     'JWT_SECRET_KEY',
     'APPS_ACCESS_TOKEN_SECRET',
     'SESSION_SECRET',
     'VERIFY_TOKEN',
     'INCIDENT_WEBHOOK_SECRET',
+    'ADMIN_PASSWORD',
+    'SUPER_PASSWORD',
     'CHAT21_ADMIN_TOKEN',
     'PUSH_WH_CHAT21_API_ADMIN_TOKEN',
     'PUSH_WH_WEBHOOK_TOKEN',
     'MEDIA_CDN_SIGNING_SECRET',
   ].forEach((key) => assertUrlSafeSecret(env, key, errors));
 
+  assertDifferent(env, 'GLOBAL_SECRET', 'CHAT21_JWT_SECRET', errors);
+  assertDifferent(env, 'GLOBAL_SECRET', 'JWT_SECRET_KEY', errors);
+  assertSame(env, 'APPS_ACCESS_TOKEN_SECRET', 'GLOBAL_SECRET', errors);
   assertDifferent(env, 'JWT_SECRET_KEY', 'CHAT21_JWT_SECRET', errors);
-  assertDifferent(env, 'APPS_ACCESS_TOKEN_SECRET', 'JWT_SECRET_KEY', errors);
   assertDifferent(env, 'APPS_ACCESS_TOKEN_SECRET', 'CHAT21_JWT_SECRET', errors);
   assertDifferent(env, 'SESSION_SECRET', 'JWT_SECRET_KEY', errors);
+  assertDifferent(env, 'SESSION_SECRET', 'GLOBAL_SECRET', errors);
   assertDifferent(env, 'SESSION_SECRET', 'CHAT21_JWT_SECRET', errors);
   assertDifferent(env, 'SESSION_SECRET', 'APPS_ACCESS_TOKEN_SECRET', errors);
 
