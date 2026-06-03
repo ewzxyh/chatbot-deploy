@@ -348,6 +348,13 @@ function main() {
   if (hasValue(env, 'SENTRY_DSN') && !/^https:\/\/[^@\s]+@[^/\s]+\/\d+/.test(env.SENTRY_DSN)) {
     errors.push('SENTRY_DSN must look like an https Sentry DSN');
   }
+  assertNumberBetween(env, 'DASHBOARD_SENTRY_TRACES_SAMPLE_RATE', 0, 1, errors);
+  if (isEnabled(env.DASHBOARD_SENTRY_ENABLED) && !hasValue(env, 'DASHBOARD_SENTRY_DSN')) {
+    errors.push('DASHBOARD_SENTRY_ENABLED=true requires DASHBOARD_SENTRY_DSN');
+  }
+  if (hasValue(env, 'DASHBOARD_SENTRY_DSN') && !/^https:\/\/[^@\s]+@[^/\s]+\/\d+/.test(env.DASHBOARD_SENTRY_DSN)) {
+    errors.push('DASHBOARD_SENTRY_DSN must look like an https Sentry DSN');
+  }
 
   if (isEnabled(env.MEDIA_CDN_ENABLED)) {
     if (!hasValue(env, 'MEDIA_CDN_BASE_URL')) {

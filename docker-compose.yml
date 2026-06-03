@@ -41,6 +41,11 @@ services:
       - COMMUNITY_TEMPLATES_URL=/api/modules/templates/public/community
       - TEMPLATES_URL=/api/modules/templates/public/templates
       - FILE_UPLOAD_ACCEPT=*/*
+      - "DASHBOARD_SENTRY_ENABLED=${DASHBOARD_SENTRY_ENABLED:-false}"
+      - "DASHBOARD_SENTRY_DSN=${DASHBOARD_SENTRY_DSN:-}"
+      - "DASHBOARD_SENTRY_ENVIRONMENT=${DASHBOARD_SENTRY_ENVIRONMENT:-production}"
+      - "DASHBOARD_SENTRY_RELEASE=${DASHBOARD_SENTRY_RELEASE:-}"
+      - "DASHBOARD_SENTRY_TRACES_SAMPLE_RATE=${DASHBOARD_SENTRY_TRACES_SAMPLE_RATE:-0}"
     ports:
       - "127.0.0.1:4500:80" # local direct access only; production should enter through proxy
     command: >-
