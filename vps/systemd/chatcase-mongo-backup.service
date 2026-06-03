@@ -7,9 +7,8 @@ After=network-online.target docker.service
 Type=oneshot
 User=root
 Group=root
-WorkingDirectory=/opt/chatcase/tiledesk
 EnvironmentFile=-/etc/chatcase/chatcase-backup.env
-ExecStart=/opt/chatcase/tiledesk/scripts/chatcase-mongo-backup-r2-daily.sh
+ExecStart=/usr/bin/env bash -lc 'project_root="${PROJECT_ROOT:-/opt/chatcase/tiledesk}"; cd "$project_root"; exec "$project_root/scripts/chatcase-mongo-backup-r2-daily.sh"'
 TimeoutStartSec=2h
 Nice=10
 IOSchedulingClass=best-effort
