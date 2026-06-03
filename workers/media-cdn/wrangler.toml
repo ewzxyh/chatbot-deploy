@@ -1,0 +1,19 @@
+name = "chatcase-media-cdn"
+main = "worker.mjs"
+compatibility_date = "2026-05-20"
+
+workers_dev = false
+
+routes = [
+  { pattern = "media.chatcase.com.br", custom_domain = true }
+]
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "chatcase"
+preview_bucket_name = "chatcase"
+
+[vars]
+MEDIA_CDN_R2_KEY_PREFIX = "prod"
+MEDIA_CDN_CACHE_TTL_SECONDS = "300"
+MEDIA_CDN_ALLOWED_ORIGIN = "https://app.chatcase.com.br"

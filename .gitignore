@@ -6,6 +6,8 @@ backups/
 
 qdrant_storage/
 .firecrawl/
+.wrangler/
+workers/**/.wrangler/
 
 logs/
 *.log
