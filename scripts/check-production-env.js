@@ -289,6 +289,7 @@ function main() {
     'PRIVACY_ANONYMIZE_MESSAGE_TEXT',
     'BILLING_LIFECYCLE_JOB_ENABLED',
     'BILLING_LIFECYCLE_JOB_DRY_RUN',
+    'BILLING_LIFECYCLE_DRY_RUN',
     'BILLING_LIFECYCLE_EMAIL_ENABLED',
   ].forEach((key) => {
     if (env[key] && !['true', 'false'].includes(env[key])) {
@@ -310,6 +311,12 @@ function main() {
 
   if (isEnabled(env.BILLING_LIFECYCLE_JOB_ENABLED) && env.BILLING_LIFECYCLE_JOB_DRY_RUN === 'true') {
     warn.push('BILLING_LIFECYCLE_JOB_ENABLED=true with BILLING_LIFECYCLE_JOB_DRY_RUN=true will only simulate billing changes');
+  }
+
+  if (isEnabled(env.BILLING_LIFECYCLE_JOB_ENABLED) &&
+      env.BILLING_LIFECYCLE_DRY_RUN &&
+      env.BILLING_LIFECYCLE_DRY_RUN !== env.BILLING_LIFECYCLE_JOB_DRY_RUN) {
+    warn.push('BILLING_LIFECYCLE_DRY_RUN differs from BILLING_LIFECYCLE_JOB_DRY_RUN; status endpoints may show a different default from the scheduled job');
   }
 
   if (isEnabled(env.BILLING_LIFECYCLE_JOB_ENABLED) &&
