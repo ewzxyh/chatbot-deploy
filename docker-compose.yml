@@ -544,6 +544,7 @@ services:
   rabbitmq:
     image: chat21/chat21-rabbitmq
     container_name: chatcase-rabbitmq
+    restart: unless-stopped
     volumes:
       - ./rabbitmq-configure-and-start.sh:/usr/local/bin/chatcase-rabbitmq-configure-and-start.sh:ro
     environment:
@@ -577,6 +578,7 @@ services:
   mongo:
     container_name: chatcase-mongo
     image: "mongo:7.0.2"
+    restart: unless-stopped
     command: "--bind_ip_all"
     volumes:
       - "tiledesk-datadb:/data/db"
@@ -598,6 +600,7 @@ services:
   redis:
     container_name: chatcase-redis
     image: "redis:7.0.5"
+    restart: unless-stopped
     volumes:
       - "redis-data:/data"
     environment:
