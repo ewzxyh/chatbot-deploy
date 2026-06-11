@@ -452,6 +452,8 @@ services:
       server:
         condition: service_started
   backend-llm-train:
+    profiles:
+      - ai
     image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
     container_name: chatcase-backend-llm-train
     environment:
@@ -480,6 +482,8 @@ services:
       - "127.0.0.1:3009:3009"
     restart: unless-stopped
   backend-llm-qa:
+    profiles:
+      - ai
     image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
     container_name: chatcase-backend-llm-qa
     environment:
@@ -534,6 +538,8 @@ services:
       - "-g"
       - daemon off;
   qdrant:
+    profiles:
+      - ai
     image: "qdrant/qdrant:latest"
     ports:
       - "127.0.0.1:6333:6333"
@@ -606,7 +612,7 @@ services:
     environment:
       TZ: "${TZ:-America/Sao_Paulo}"
     ports:
-      - "127.0.0.1:6379:6379"
+      - "${REDIS_BIND_IP:-127.0.0.1}:${REDIS_PUBLISHED_PORT:-16379}:6379"
     healthcheck:
           test: ["CMD", "redis-cli", "ping"]
           interval: 5s

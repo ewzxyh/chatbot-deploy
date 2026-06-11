@@ -55,6 +55,12 @@ The `/chat/` service is built from the local `../chatcase-chat21-ionic` fork. Th
 
 `GPTKEY` is optional when `AI_FEATURES_ENABLED=false`. Leave it empty if ChatCase will not use AI, Knowledge Base, or RAG features in the first production cut. If those features are enabled later, set `AI_FEATURES_ENABLED=true`, fill `GPTKEY`, and rerun `node scripts/check-production-env.js .env.production`.
 
+AI/RAG containers are opt-in because `backend-llm-train`, `backend-llm-qa`, and `qdrant` are large and are not needed while Knowledge Base/RAG is disabled. To run them locally or in production later, enable the `ai` compose profile explicitly:
+
+```bash
+docker compose --profile ai up -d backend-llm-train backend-llm-qa qdrant
+```
+
 `ADMIN_PASSWORD` is the bootstrap password used only when the Mongo volume is fresh and `BOOT_LOADING=true` creates the first superadmin user. Store it in a password manager. After the first login, rotate the password from the dashboard and keep the rotated value in the password manager. `SUPER_PASSWORD` is a separate emergency/master password used by upstream Tiledesk auth; always set it to a long random value in production so the upstream default is never active.
 
 For the authenticated production smoke, either rely on `ADMIN_PASSWORD` from the env file during first deploy or export the current superadmin password only for the current shell session:
@@ -299,6 +305,16 @@ https://app.example.com/automation/webhooks/sentry/issue-alert?secret=<long-rand
 ```
 
 Keep `INCIDENT_AUTOMATION_DRY_RUN=true` until the endpoint, secret, and routing are verified. To send via Resend, set `INCIDENT_AUTOMATION_DRY_RUN=false`, `RESEND_API_KEY`, `INCIDENT_EMAIL_FROM`, and `INCIDENT_EMAIL_TO`.
+
+## Local Docker Maintenance
+
+The local Windows Docker VHDX can keep its old physical size even after images are removed. First run the safe maintenance script:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows-docker-maintenance.ps1
+```
+
+This prunes build cache and dangling images only; it does not prune volumes. If `docker system df` drops but `docker_data.vhdx` keeps the same size, physical compaction requires Docker/WSL stopped and an elevated PowerShell/diskpart session. Do not delete `docker_data.vhdx` directly.
 
 ## Production Smoke Test
 
