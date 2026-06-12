@@ -114,6 +114,7 @@ function baseProductionEnv(overrides = {}) {
     RABBITMQ_ADMIN_URI: '[REDACTED_CREDENTIAL_URL]',
     GLOBAL_SECRET: 'REDACTED_SECRET',
     CHAT21_JWT_SECRET: 'REDACTED_SECRET',
+    RABBITMQ_JWT_SECRET: 'REDACTED_SECRET',
     JWT_SECRET_KEY: 'ApiJwtSecretValue1234567890',
     APPS_ACCESS_TOKEN_SECRET: 'REDACTED_SECRET',
     SESSION_SECRET: 'REDACTED_SECRET',
@@ -280,6 +281,12 @@ function testCheckerRequiresFinalSecrets() {
   }));
   assert.notStrictEqual(sharedJwt.status, 0, 'checker must reject shared internal JWT secrets');
   assert.match(sharedJwt.stdout, /JWT_SECRET_KEY must be different from CHAT21_JWT_SECRET/);
+
+  const rabbitJwtMismatch = runChecker(baseProductionEnv({
+    RABBITMQ_JWT_SECRET: 'REDACTED_SECRET',
+  }));
+  assert.notStrictEqual(rabbitJwtMismatch.status, 0, 'checker must reject RabbitMQ JWT drift');
+  assert.match(rabbitJwtMismatch.stdout, /RABBITMQ_JWT_SECRET must match CHAT21_JWT_SECRET/);
 
   const badBilling = runChecker(baseProductionEnv({
     BILLING_LIFECYCLE_JOB_ENABLED: 'maybe',

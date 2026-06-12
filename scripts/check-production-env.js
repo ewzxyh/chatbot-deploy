@@ -385,6 +385,7 @@ function main() {
     'REDIS_PASSWORD',
     'GLOBAL_SECRET',
     'CHAT21_JWT_SECRET',
+    'RABBITMQ_JWT_SECRET',
     'JWT_SECRET_KEY',
     'APPS_ACCESS_TOKEN_SECRET',
     'SESSION_SECRET',
@@ -400,6 +401,7 @@ function main() {
 
   assertDifferent(env, 'GLOBAL_SECRET', 'CHAT21_JWT_SECRET', errors);
   assertDifferent(env, 'GLOBAL_SECRET', 'JWT_SECRET_KEY', errors);
+  assertSame(env, 'RABBITMQ_JWT_SECRET', 'CHAT21_JWT_SECRET', errors);
   assertSame(env, 'APPS_ACCESS_TOKEN_SECRET', 'GLOBAL_SECRET', errors);
   assertDifferent(env, 'JWT_SECRET_KEY', 'CHAT21_JWT_SECRET', errors);
   assertDifferent(env, 'APPS_ACCESS_TOKEN_SECRET', 'CHAT21_JWT_SECRET', errors);
