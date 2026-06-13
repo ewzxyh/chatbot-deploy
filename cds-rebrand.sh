@@ -513,14 +513,14 @@ patch_channel_guard() {
     var hash = window.location.hash || '';
     var queryIndex = hash.indexOf('?');
     if (queryIndex === -1) {
-      return 'casezap';
+      return '';
     }
 
-    return normalize(new URLSearchParams(hash.slice(queryIndex + 1)).get('channel')) || 'casezap';
+    return normalize(new URLSearchParams(hash.slice(queryIndex + 1)).get('channel')) || '';
   }
 
   function shouldHideWabaActions(channel) {
-    return !!channel && channel !== 'waba';
+    return !!channel && channel !== 'all' && channel !== 'waba';
   }
 
   function matchesBlockedLabel(element) {
@@ -605,7 +605,7 @@ patch_channel_guard() {
 
   function updateBadge(channel) {
     var existing = document.getElementById('chatcase-cds-channel-badge');
-    if (!channel) {
+    if (!channel || channel === 'all') {
       if (existing) {
         existing.remove();
       }
@@ -619,7 +619,7 @@ patch_channel_guard() {
       document.body.appendChild(existing);
     }
 
-    existing.textContent = 'Canal do fluxo: ' + (channel === 'casezap' ? 'CaseZap' : channel === 'waba' ? 'WABA / Meta' : channel);
+    existing.textContent = 'Compatibilidade: ' + (channel === 'casezap' ? 'CaseZap' : channel === 'waba' ? 'WABA / Meta' : channel);
   }
 
   function injectRuntimeFixStyles() {
