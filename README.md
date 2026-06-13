@@ -119,7 +119,7 @@ The smoke command writes, reads, verifies, and deletes a small object under `R2_
 
 ## Community Templates
 
-`/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community&channel=<channel>`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically for the selected channel.
+`/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it as a multichannel flow. When the user explicitly filters a concrete channel, the optional `channel=<channel>` query parameter is preserved and the template is imported for that channel only.
 
 ChatCase templates carry channel compatibility metadata, but the flow editor stays multichannel by default. Channel-specific behavior should live at the node/runtime layer, with graceful fallback for unsupported channels, instead of hiding blocks globally by URL. The CDS container is built from the local `../chatcase-design-studio` fork; `cds-rebrand.sh` only keeps runtime fixes, translations, metadata, and white-label patches for the built container.
 

@@ -551,7 +551,7 @@
     state.selectedId = id;
     var url = new URL(window.location.href);
     url.searchParams.set('template', id);
-    url.searchParams.set('channel', getSelectedChannelForTemplate(findTemplate(id)));
+    setUrlChannel(url, getSelectedChannelForTemplate(findTemplate(id)));
     window.history.replaceState({}, '', url.toString());
     hydrateDetail(id);
     renderGrid();
@@ -571,14 +571,14 @@
       return;
     }
 
-    var channel = getSelectedChannelForTemplate(baseTemplate);
-    var cacheKey = id + ':' + channel;
+    var selectedChannel = getSelectedChannelForTemplate(baseTemplate);
+    var cacheKey = id + ':' + selectedChannel;
 
     if (state.detailById[cacheKey]) {
       return;
     }
 
-    fetchJson(ENDPOINTS.templates + '/' + encodeURIComponent(id) + '?channel=' + encodeURIComponent(channel))
+    fetchJson(buildTemplateDetailUrl(id, selectedChannel))
       .then(function (payload) {
         state.detailById[cacheKey] = normalizeTemplate(Object.assign({}, findTemplate(id) ? findTemplate(id).source : {}, payload, { _id: id }));
         renderDetail();
@@ -611,10 +611,13 @@
       return '<span class="tag">' + escapeHtml(labelFor(channel)) + '</span>';
     }).join('');
     var selectedChannel = getSelectedChannelForTemplate(template);
-    var installParams = 'template=' + encodeURIComponent(template.id) + '&install=1&source=community&channel=' + encodeURIComponent(selectedChannel);
+    var installParams = buildInstallParams(template.id, selectedChannel);
     var installHref = '/dashboard/#/projects?' + installParams;
     var signupHref = '/dashboard/#/signup?' + installParams;
-    var exportHref = ENDPOINTS.templates + '/' + encodeURIComponent(template.id) + '/export?channel=' + encodeURIComponent(selectedChannel);
+    var exportHref = buildTemplateExportUrl(template.id, selectedChannel);
+    var installNote = selectedChannel === 'all'
+      ? 'Ao entrar no dashboard, escolha o projeto e o ChatCase importa este modelo como fluxo multicanal.'
+      : 'Ao entrar no dashboard, escolha o projeto e o ChatCase importa este modelo automaticamente para ' + labelFor(selectedChannel) + '.';
 
     els.detail.innerHTML = '' +
       '<div class="detail-cover"><img src="' + escapeHtml(template.image) + '" alt=""></div>' +
@@ -631,7 +634,7 @@
           '<div><strong>' + escapeHtml(template.certified ? 'Sim' : 'Nao') + '</strong><span>Certificado</span></div>' +
         '</div>' +
         '<ul class="feature-list">' + featureItems + '</ul>' +
-        '<p class="install-note">Ao entrar no dashboard, escolha o projeto e o ChatCase importa este modelo automaticamente para ' + escapeHtml(labelFor(selectedChannel)) + '.</p>' +
+        '<p class="install-note">' + escapeHtml(installNote) + '</p>' +
         '<div class="detail-actions">' +
           '<a class="button button-primary" href="' + installHref + '">Instalar no meu projeto</a>' +
           '<a class="button" href="' + signupHref + '">Criar conta com este modelo</a>' +
@@ -647,8 +650,8 @@
   }
 
   function getSelectedChannelForTemplate(template) {
-    if (!template || !Array.isArray(template.channels) || !template.channels.length) {
-      return 'casezap';
+    if (!template || !Array.isArray(template.channels)) {
+      return 'all';
     }
 
     if (state.channel && state.channel !== 'all') {
@@ -661,11 +664,44 @@
       }
     }
 
-    if (template.channels.some(function (channel) { return String(channel).trim().toLowerCase() === 'casezap'; })) {
-      return 'casezap';
+    if (template && template.source && template.source.attributes) {
+      var explicitChannel = normalizeInitialChannel(template.source.attributes.targetChannel || template.source.attributes.selectedChannel);
+      if (explicitChannel !== 'all' && isKnownTemplateChannel(template, explicitChannel)) {
+        return explicitChannel;
+      }
     }
 
-    return String(template.channels[0]).trim().toLowerCase();
+    return 'all';
+  }
+
+  function buildTemplateDetailUrl(id, selectedChannel) {
+    var url = ENDPOINTS.templates + '/' + encodeURIComponent(id);
+    if (selectedChannel && selectedChannel !== 'all') {
+      return url + '?channel=' + encodeURIComponent(selectedChannel);
+    }
+
+    return url;
+  }
+
+  function buildTemplateExportUrl(id, selectedChannel) {
+    var url = ENDPOINTS.templates + '/' + encodeURIComponent(id) + '/export';
+    if (selectedChannel && selectedChannel !== 'all') {
+      return url + '?channel=' + encodeURIComponent(selectedChannel);
+    }
+
+    return url;
+  }
+
+  function buildInstallParams(id, selectedChannel) {
+    var params = new URLSearchParams();
+    params.set('template', id);
+    params.set('install', '1');
+    params.set('source', 'community');
+    if (selectedChannel && selectedChannel !== 'all') {
+      params.set('channel', selectedChannel);
+    }
+
+    return params.toString();
   }
 
   function isSelectedChannelUnsupported(template) {
@@ -697,7 +733,7 @@
     var url = new URL(window.location.href);
     var channel = getSelectedChannelForTemplate(findTemplate(id));
     url.searchParams.set('template', id);
-    url.searchParams.set('channel', channel);
+    setUrlChannel(url, channel);
     var value = url.toString();
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -712,12 +748,16 @@
 
   function updateUrlChannel(channel) {
     var url = new URL(window.location.href);
+    setUrlChannel(url, channel);
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  function setUrlChannel(url, channel) {
     if (!channel || channel === 'all') {
       url.searchParams.delete('channel');
     } else {
       url.searchParams.set('channel', channel);
     }
-    window.history.replaceState({}, '', url.toString());
   }
 
   function updateSummary() {

@@ -474,19 +474,21 @@ async function run() {
 
     assert(telegramForkRejected, 'fork should reject unsupported Telegram channel');
 
-    let allChannelForkRejected = false;
+    const allChannelFork = await requestJson({
+      method: 'POST',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}?public=true&projectid=${encodeURIComponent(projectId)}&channel=all`,
+      auth
+    });
 
-    try {
-      await requestJson({
-        method: 'POST',
-        url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/fork/${encodeURIComponent(EXPECTED_TEMPLATES[0].id)}?public=true&projectid=${encodeURIComponent(projectId)}&channel=all`,
-        auth
-      });
-    } catch (error) {
-      allChannelForkRejected = /HTTP 400/.test(error.message);
-    }
+    const allChannelBot = await requestJson({
+      method: 'GET',
+      url: `${baseUrl}${apiPrefix}/${encodeURIComponent(projectId)}/faq_kb/${encodeURIComponent(allChannelFork.bot_id)}`,
+      auth
+    });
 
-    assert(allChannelForkRejected, 'fork should reject ambiguous channel=all imports');
+    assert.strictEqual(allChannelBot.attributes && allChannelBot.attributes.targetChannel, undefined, 'fork with channel=all should stay multichannel');
+    assert(allChannelBot.attributes && allChannelBot.attributes.publication, 'fork with channel=all should keep publication metadata');
+    assert(Array.isArray(allChannelBot.attributes.publication.wabaTemplates), 'fork with channel=all should keep WABA suggestions');
 
     const defaultFork = await requestJson({
       method: 'POST',
@@ -500,9 +502,9 @@ async function run() {
       auth
     });
 
-    assert.strictEqual(defaultBot.attributes && defaultBot.attributes.targetChannel, 'casezap', 'fork without channel should default ChatCase templates to CaseZap');
-    assert(defaultBot.attributes && defaultBot.attributes.publication, 'fork without channel should keep channel-scoped publication metadata');
-    assert(!defaultBot.attributes.publication.wabaTemplates, 'fork without channel should not keep WABA suggestions');
+    assert.strictEqual(defaultBot.attributes && defaultBot.attributes.targetChannel, undefined, 'fork without channel should stay multichannel');
+    assert(defaultBot.attributes && defaultBot.attributes.publication, 'fork without channel should keep publication metadata');
+    assert(Array.isArray(defaultBot.attributes.publication.wabaTemplates), 'fork without channel should keep WABA suggestions');
 
     for (const expected of EXPECTED_TEMPLATES) {
       const detail = detailByTemplateId.get(expected.id);
