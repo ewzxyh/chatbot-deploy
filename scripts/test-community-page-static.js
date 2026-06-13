@@ -41,6 +41,8 @@ assert(js.includes("params.set('template'"), 'JS should support public template 
 assert(js.includes('/dashboard/#/projects?'), 'JS should route template installs through the protected projects page');
 assert(js.includes("params.set('install', '1')") && js.includes("params.set('source', 'community')"), 'JS should preserve direct community install intent');
 assert(js.includes("selectedChannel !== 'all'"), 'JS should only add channel query params for explicit channel installs');
+assert(js.includes('hasExplicitChannelScope'), 'JS should distinguish explicit channel-exclusive templates from multichannel templates');
+assert(js.includes('exclusiveChannel === true') && js.includes('isChannelExclusive === true'), 'JS should only honor stored template channel when exclusivity is explicit');
 assert(js.includes("initialParams.get('channel')"), 'JS should initialize the community channel filter from URL query');
 assert(js.includes("url.searchParams.set('channel'"), 'JS should preserve selected channel in public links');
 assert(!js.includes("return 'casezap';"), 'JS should not default public template installs to CaseZap');

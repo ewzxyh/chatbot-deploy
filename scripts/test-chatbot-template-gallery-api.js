@@ -272,13 +272,11 @@ function assertPublicationPlan(payload, templateId, selectedChannel) {
   assert(Array.isArray(publication.readiness), `template ${templateId} should expose channel readiness`);
 
   if (selectedChannel) {
-    assert.strictEqual(payload.attributes.targetChannel, selectedChannel, `template ${templateId} should mark selected channel`);
-    assert(publication.readiness.every((item) => item.channel === selectedChannel), `template ${templateId} readiness should be scoped to ${selectedChannel}`);
-
-    if (selectedChannel !== 'waba') {
-      assert(!publication.wabaTemplates, `template ${templateId} should hide WABA suggestions for ${selectedChannel}`);
-      return;
-    }
+    assert.strictEqual(payload.attributes.targetChannel, undefined, `template ${templateId} should stay multichannel when filtered by ${selectedChannel}`);
+    assert(
+      publication.readiness.some((item) => item.channel === selectedChannel),
+      `template ${templateId} readiness should include ${selectedChannel}`
+    );
   }
 
   assert(publication.readiness.some((item) => item.channel === 'waba' && item.status === 'requires_approval'), `template ${templateId} should flag WABA approval requirement`);
@@ -525,9 +523,9 @@ async function run() {
       assert.strictEqual(persistedBot.name, detail.name);
       assert.strictEqual(persistedBot.type, 'tilebot');
       assert.strictEqual(persistedBot.subtype, 'chatbot');
-      assert.strictEqual(persistedBot.attributes && persistedBot.attributes.targetChannel, 'casezap');
+      assert.strictEqual(persistedBot.attributes && persistedBot.attributes.targetChannel, undefined);
       assert(persistedBot.attributes && persistedBot.attributes.publication, `persisted template ${expected.id} should keep channel publication metadata`);
-      assert(!persistedBot.attributes.publication.wabaTemplates, `persisted template ${expected.id} should not keep WABA suggestions for CaseZap`);
+      assert(Array.isArray(persistedBot.attributes.publication.wabaTemplates), `persisted template ${expected.id} should keep WABA suggestions unless the template is explicitly channel-exclusive`);
 
       const intents = await requestJson({
         method: 'GET',

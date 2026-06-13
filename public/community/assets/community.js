@@ -494,6 +494,13 @@
     });
   }
 
+  function hasExplicitChannelScope(attributes) {
+    return !!attributes && (
+      attributes.exclusiveChannel === true ||
+      attributes.isChannelExclusive === true
+    );
+  }
+
   function applyFilters() {
     state.filtered = state.templates.filter(matchesTemplate);
 
@@ -664,7 +671,7 @@
       }
     }
 
-    if (template && template.source && template.source.attributes) {
+    if (template && template.source && hasExplicitChannelScope(template.source.attributes)) {
       var explicitChannel = normalizeInitialChannel(template.source.attributes.targetChannel || template.source.attributes.selectedChannel);
       if (explicitChannel !== 'all' && isKnownTemplateChannel(template, explicitChannel)) {
         return explicitChannel;
