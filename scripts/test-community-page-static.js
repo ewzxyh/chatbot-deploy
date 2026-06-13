@@ -56,13 +56,14 @@ assert(compose.includes('./public/community:/usr/share/nginx/html/community:ro')
 assert(compose.includes('./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro'), 'Compose should run CDS rebrand patch');
 
 const cdsRebrand = read(path.join(root, 'cds-rebrand.sh'));
-assert(cdsRebrand.includes('chatcase-cds-channel-guard.js'), 'CDS rebrand should inject channel compatibility guard');
+assert(cdsRebrand.includes('chatcase-cds-channel-guard.js'), 'CDS rebrand should inject runtime guard');
 assert(cdsRebrand.includes('Template WABA'), 'CDS rebrand should rename WABA-specific actions');
-assert(cdsRebrand.includes("return 'casezap';"), 'CDS guard should hide WABA-only actions by default when channel is missing');
-assert(cdsRebrand.includes('waba\\s+por\\s+segmento'), 'CDS guard should hide WABA segment actions on non-WABA channels');
-assert(cdsRebrand.includes('isUnsafeHiddenTarget'), 'CDS guard should avoid hiding full action overlays');
+assert(!cdsRebrand.includes('Compatibilidade:'), 'CDS guard should not render a global channel compatibility badge');
+assert(!cdsRebrand.includes('data-chatcase-channel-hidden'), 'CDS guard should not hide actions by global channel');
+assert(!cdsRebrand.includes("return 'casezap';"), 'CDS guard should not default flows to CaseZap');
+assert(cdsRebrand.includes('removeChannelBadge'), 'CDS guard should remove stale channel badges from older bundles');
 assert(cdsRebrand.includes('chatcase-cds-runtime-fixes'), 'CDS guard should inject runtime overlay fixes');
 assert(cdsRebrand.includes('removeExternalSplashFrames'), 'CDS guard should remove external splash iframes blocked by CSP');
-assert(cdsRebrand.includes('20260525-cds-hover1'), 'CDS guard version should be bumped after runtime hover fixes');
+assert(cdsRebrand.includes('20260613-multichannel1'), 'CDS guard version should be bumped after multichannel runtime fix');
 
 console.log('OK community page static checks');

@@ -373,18 +373,7 @@ patch_channel_guard() {
 (function () {
   'use strict';
 
-  var blockedWabaLabels = [
-    /whatsapp\s+static/i,
-    /whatsapp\s+by\s+attribute/i,
-    /whatsapp\s+by\s+segment/i,
-    /send\s+whatsapp/i,
-    /template\s+waba/i,
-    /waba\s+por\s+atributo/i,
-    /waba\s+por\s+segmento/i,
-    /enviar\s+whatsapp/i
-  ];
   var observer;
-  var lastChannel = '';
   var lastLocation = '';
   var pendingMutationRoots = [];
   var mutationWorkScheduled = false;
@@ -500,126 +489,11 @@ patch_channel_guard() {
     'Blocks': 'Blocos'
   };
 
-  function normalize(value) {
-    return String(value || '').trim().toLowerCase();
-  }
-
-  function getChannelFromLocation() {
-    var searchChannel = new URLSearchParams(window.location.search || '').get('channel');
-    if (searchChannel) {
-      return normalize(searchChannel);
-    }
-
-    var hash = window.location.hash || '';
-    var queryIndex = hash.indexOf('?');
-    if (queryIndex === -1) {
-      return '';
-    }
-
-    return normalize(new URLSearchParams(hash.slice(queryIndex + 1)).get('channel')) || '';
-  }
-
-  function shouldHideWabaActions(channel) {
-    return !!channel && channel !== 'all' && channel !== 'waba';
-  }
-
-  function matchesBlockedLabel(element) {
-    var ownText = '';
-    Array.prototype.forEach.call(element.childNodes || [], function (node) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        ownText += ' ' + node.nodeValue;
-      }
-    });
-
-    var text = [
-      ownText,
-      element.getAttribute && element.getAttribute('title'),
-      element.getAttribute && element.getAttribute('aria-label')
-    ].join(' ');
-
-    return blockedWabaLabels.some(function (pattern) {
-      return pattern.test(text);
-    });
-  }
-
-  function isUnsafeHiddenTarget(element) {
-    if (!element || element === document.body || element === document.documentElement) {
-      return true;
-    }
-
-    return /\b(cdk-overlay|mat-menu-panel|mat-menu-content|sat-popover|cdk-virtual-scroll|cds-canvas)\b/i.test(String(element.className || ''));
-  }
-
-  function findSmallContainer(element) {
-    var current = element;
-    var fallback = element;
-
-    for (var depth = 0; depth < 6 && current; depth += 1) {
-      var className = String(current.className || '');
-      var role = current.getAttribute && current.getAttribute('role');
-      var textLength = String(current.textContent || '').trim().length;
-      var childCount = current.children ? current.children.length : 0;
-
-      if (!isUnsafeHiddenTarget(current) && textLength > 0 && textLength <= 140 && childCount <= 8) {
-        fallback = current;
-      }
-
-      if (
-        !isUnsafeHiddenTarget(current) &&
-        (
-          current.tagName === 'BUTTON' ||
-          current.tagName === 'LI' ||
-          role === 'menuitem' ||
-          /\b(mat-menu-item|menu-item|dropdown-item|action-row|action-item|action-box)\b/i.test(className)
-        )
-      ) {
-        return current;
-      }
-
-      current = current.parentElement;
-    }
-
-    return fallback;
-  }
-
-  function setHidden(element, hidden) {
-    if (!element) {
-      return;
-    }
-
-    if (hidden && isUnsafeHiddenTarget(element)) {
-      return;
-    }
-
-    if (hidden) {
-      element.setAttribute('data-chatcase-channel-hidden', 'waba-only');
-      element.style.display = 'none';
-      return;
-    }
-
-    if (element.getAttribute('data-chatcase-channel-hidden') === 'waba-only') {
-      element.removeAttribute('data-chatcase-channel-hidden');
-      element.style.display = '';
-    }
-  }
-
-  function updateBadge(channel) {
+  function removeChannelBadge() {
     var existing = document.getElementById('chatcase-cds-channel-badge');
-    if (!channel || channel === 'all') {
-      if (existing) {
-        existing.remove();
-      }
-      return;
+    if (existing) {
+      existing.remove();
     }
-
-    if (!existing) {
-      existing = document.createElement('div');
-      existing.id = 'chatcase-cds-channel-badge';
-      existing.style.cssText = 'position:fixed;top:76px;right:18px;z-index:2147483647;padding:7px 10px;border:1px solid rgba(43,149,233,.35);border-radius:999px;background:#fff;color:#1f3550;font:600 12px/1.2 Arial,sans-serif;box-shadow:0 6px 18px rgba(31,53,80,.12)';
-      document.body.appendChild(existing);
-    }
-
-    existing.textContent = 'Compatibilidade: ' + (channel === 'casezap' ? 'CaseZap' : channel === 'waba' ? 'WABA / Meta' : channel);
   }
 
   function injectRuntimeFixStyles() {
@@ -630,7 +504,6 @@ patch_channel_guard() {
     var style = document.createElement('style');
     style.id = 'chatcase-cds-runtime-fixes';
     style.textContent = [
-      '#chatcase-cds-channel-badge{pointer-events:none}',
       '.cdk-overlay-container{z-index:2147483000!important;pointer-events:none!important}',
       '.cdk-overlay-pane,.mat-menu-panel,.mat-menu-content,.sat-popover-container,.sat-popover{z-index:2147483001!important;pointer-events:auto!important}',
       '.welcome_video iframe[src*="youtube.com"],.welcome_video iframe[src*="youtu.be"],.welcome_video iframe[src*="vimeo.com"]{display:none!important}'
@@ -864,35 +737,11 @@ patch_channel_guard() {
     translateAttributes(root || document.body);
   }
 
-  function collectBlockedTargets(root, hiddenTargets) {
-    var elementRoot = getElementRoot(root);
-    var elements = [];
-
-    if (!elementRoot) {
-      return;
-    }
-
-    if (elementRoot.nodeType === Node.ELEMENT_NODE) {
-      elements.push(elementRoot);
-    }
-
-    Array.prototype.push.apply(elements, elementRoot.querySelectorAll ? Array.prototype.slice.call(elementRoot.querySelectorAll('*')) : []);
-
-    elements.forEach(function (element) {
-      if (matchesBlockedLabel(element)) {
-        hiddenTargets.push(findSmallContainer(element));
-      }
-    });
-  }
-
   function processMutationRoots() {
     var roots = pendingMutationRoots.splice(0, pendingMutationRoots.length);
-    var channel = getChannelFromLocation();
-    var hideWaba = shouldHideWabaActions(channel);
-    var hiddenTargets = [];
 
     mutationWorkScheduled = false;
-    updateBadge(channel);
+    removeChannelBadge();
     injectRuntimeFixStyles();
     ensureOverlayLayering();
 
@@ -900,13 +749,6 @@ patch_channel_guard() {
       removeExternalSplashFrames(root);
       stabilizeActionPalette(root);
       translatePortuguese(root);
-      if (hideWaba) {
-        collectBlockedTargets(root, hiddenTargets);
-      }
-    });
-
-    hiddenTargets.forEach(function (element) {
-      setHidden(element, true);
     });
   }
 
@@ -924,33 +766,14 @@ patch_channel_guard() {
   }
 
   function applyGuard() {
-    var channel = getChannelFromLocation();
-    var hideWaba = shouldHideWabaActions(channel);
-    var hiddenTargets = [];
-
-    updateBadge(channel);
+    removeChannelBadge();
     injectRuntimeFixStyles();
     removeExternalSplashFrames(document.body);
     stabilizeActionPalette(document.body);
     translatePortuguese();
-
-    Array.prototype.forEach.call(document.querySelectorAll('[data-chatcase-channel-hidden="waba-only"]'), function (element) {
-      setHidden(element, false);
-    });
-
-    if (!hideWaba) {
-      return;
-    }
-
-    collectBlockedTargets(document.body, hiddenTargets);
-
-    hiddenTargets.forEach(function (element) {
-      setHidden(element, true);
-    });
   }
 
   function start() {
-    lastChannel = getChannelFromLocation();
     lastLocation = window.location.href;
     applyGuard();
     observer = new MutationObserver(function (mutations) {
@@ -971,10 +794,8 @@ patch_channel_guard() {
     observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label', 'value'] });
 
     window.setInterval(function () {
-      var channel = getChannelFromLocation();
       var currentLocation = window.location.href;
-      if (channel !== lastChannel || currentLocation !== lastLocation) {
-        lastChannel = channel;
+      if (currentLocation !== lastLocation) {
         lastLocation = currentLocation;
         applyGuard();
       }
@@ -990,9 +811,9 @@ patch_channel_guard() {
 EOF
 
   if [ -f "$ROOT/index.html" ] && grep -q "chatcase-cds-channel-guard.js" "$ROOT/index.html"; then
-    sed -i 's#chatcase-cds-channel-guard.js?v=[A-Za-z0-9._-]*#chatcase-cds-channel-guard.js?v=20260525-cds-hover1#g' "$ROOT/index.html"
+    sed -i 's#chatcase-cds-channel-guard.js?v=[A-Za-z0-9._-]*#chatcase-cds-channel-guard.js?v=20260613-multichannel1#g' "$ROOT/index.html"
   elif [ -f "$ROOT/index.html" ]; then
-    sed -i 's#</body>#<script src="chatcase-cds-channel-guard.js?v=20260525-cds-hover1"></script></body>#' "$ROOT/index.html"
+    sed -i 's#</body>#<script src="chatcase-cds-channel-guard.js?v=20260613-multichannel1"></script></body>#' "$ROOT/index.html"
   fi
 }
 

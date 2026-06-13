@@ -121,7 +121,7 @@ The smoke command writes, reads, verifies, and deletes a small object under `R2_
 
 `/community/` is a public, white-label template gallery served by the proxy. Its install CTA opens the protected dashboard projects route with `template=<id>&install=1&source=community&channel=<channel>`; after login, the user selects the target project and the dashboard uses the native public-template fork flow to import it automatically for the selected channel.
 
-ChatCase templates carry channel compatibility metadata. CaseZap and WhatsApp session flows do not expose WABA/Meta template publication actions during import. The CDS container is built from the local `../chatcase-design-studio` fork; `cds-rebrand.sh` still injects the existing runtime guard that hides WABA-only actions when the flow URL contains `?channel=casezap`, `?channel=whatsapp`, or another non-WABA channel. Deeper channel-specific editing rules should now move into the fork instead of growing more bundle patches.
+ChatCase templates carry channel compatibility metadata, but the flow editor stays multichannel by default. Channel-specific behavior should live at the node/runtime layer, with graceful fallback for unsupported channels, instead of hiding blocks globally by URL. The CDS container is built from the local `../chatcase-design-studio` fork; `cds-rebrand.sh` only keeps runtime fixes, translations, metadata, and white-label patches for the built container.
 
 Before deploying or changing the public template page, run:
 
