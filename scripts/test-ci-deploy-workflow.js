@@ -16,6 +16,7 @@ const requiredSnippets = [
   'node --check scripts/check-chat21-runtime-env.js',
   'bash -n scripts/deploy-compose.sh',
   'node scripts/test-chat21-runtime-env.js',
+  'node scripts/test-deploy-compose-script.js',
   'node scripts/test-hardening-config.js',
   'node scripts/test-community-page-static.js',
   'node scripts/test-legal-pages-static.js',

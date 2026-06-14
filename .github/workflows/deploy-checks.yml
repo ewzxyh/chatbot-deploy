@@ -26,6 +26,7 @@ jobs:
       - name: Run static deploy tests
         run: |
           node scripts/test-chat21-runtime-env.js
+          node scripts/test-deploy-compose-script.js
           node scripts/test-ci-deploy-workflow.js
           node scripts/test-hardening-config.js
           node scripts/test-community-page-static.js
