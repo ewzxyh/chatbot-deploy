@@ -46,6 +46,7 @@ node scripts/test-community-page-static.js
 node scripts/r2-storage-smoke.js smoke --env .env.production
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+node scripts/check-chat21-runtime-env.js --env .env.production -f docker-compose.yml -f docker-compose.prod.yml
 SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --env .env.production
 ```
 
