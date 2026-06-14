@@ -1,0 +1,33 @@
+name: Deploy checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  static-deploy-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check deploy script syntax
+        run: |
+          node --check scripts/check-chat21-runtime-env.js
+          bash -n scripts/deploy-compose.sh
+
+      - name: Run static deploy tests
+        run: |
+          node scripts/test-chat21-runtime-env.js
+          node scripts/test-ci-deploy-workflow.js
+          node scripts/test-hardening-config.js
+          node scripts/test-community-page-static.js
+          node scripts/test-legal-pages-static.js
+          node scripts/test-media-cdn-worker.js
