@@ -50,6 +50,18 @@ node scripts/check-chat21-runtime-env.js --env .env.production -f docker-compose
 SMOKE_ADMIN_PASSWORD='<superadmin-password>' node scripts/production-smoke.js --env .env.production
 ```
 
+For repeat deployments, prefer the wrapper so the Chat21 runtime check is not skipped:
+
+```bash
+SMOKE_ADMIN_PASSWORD='<superadmin-password>' bash scripts/deploy-compose.sh --env .env.production
+```
+
+On the DEV VPS, use its env file and the dev compose file:
+
+```bash
+bash scripts/deploy-compose.sh --env .env.dev-vps -f docker-compose.yml --skip-smoke
+```
+
 The base compose keeps dev defaults so local Docker remains easy to run. Production must use `.env.production` plus `docker-compose.prod.yml`.
 
 The `/chat/` service is built from the local `../chatcase-chat21-ionic` fork. The `/cds/` flow builder is built from the local `../chatcase-design-studio` fork. Keep those repos beside this deploy repo before running `docker compose up --build`; the official images are left commented in `docker-compose.yml` only as upstream references.
