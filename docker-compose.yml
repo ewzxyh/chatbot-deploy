@@ -101,7 +101,8 @@ services:
       exec nginx -g 'daemon off;'"
     restart: unless-stopped
   webwidget:
-    image: "chat21/chat21-web-widget:5.1.2"
+    build: ../chatcase-chat21-web-widget
+    # image: "chat21/chat21-web-widget:5.1.2"
     container_name: chatcase-chat21-web-widget
     ports:
       - "127.0.0.1:4200:80"
@@ -184,7 +185,8 @@ services:
       exec nginx -g 'daemon off;'"
     restart: unless-stopped
   chatbot:
-    image: "tiledesk/tiledesk-chatbot:2.0.32-rc8"
+    build: ../chatcase-tiledesk-chatbot
+    # image: "tiledesk/tiledesk-chatbot:2.0.32-rc8"
     container_name: chatcase-chatbot
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
@@ -397,7 +399,8 @@ services:
       - "127.0.0.1:${INCIDENT_AUTOMATION_PORT:-8787}:8787"
     restart: unless-stopped
   chat21httpserver:
-    image: "chat21/chat21-http-server:0.2.37"
+    build: ../chatcase-chat21-http-server
+    # image: "chat21/chat21-http-server:0.2.37"
     #image: chat21http-gab:0.1.11
     container_name: chatcase-chat21httpserver
     restart: unless-stopped
@@ -429,7 +432,8 @@ services:
     ports:
       - "127.0.0.1:8004:8004"
   chat21server:
-    image: "chat21/chat21-server:0.2.53"
+    build: ../chatcase-chat21-server
+    # image: "chat21/chat21-server:0.2.53"
     container_name: chatcase-chat21server
     restart: unless-stopped
     environment:
@@ -454,7 +458,8 @@ services:
   backend-llm-train:
     profiles:
       - ai
-    image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
+    build: ../chatcase-tiledesk-llm
+    # image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
     container_name: chatcase-backend-llm-train
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
@@ -484,7 +489,8 @@ services:
   backend-llm-qa:
     profiles:
       - ai
-    image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
+    build: ../chatcase-tiledesk-llm
+    # image: "tiledesk/tiledesk-backend-llm:0.5.3-rc1"
     container_name: chatcase-backend-llm-qa
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
