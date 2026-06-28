@@ -13,16 +13,16 @@
 ### Task 1: Confirm Current Channel Scope Sources
 
 **Files:**
-- Inspect: `C:/Users/enzo/tiledesk-server/pubmodules/chatbotTemplates/chatcaseTemplates.js`
-- Inspect: `C:/Users/enzo/tiledesk-server/routes/faq_kb.js`
-- Inspect: `C:/Users/enzo/tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.ts`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-server/pubmodules/chatbotTemplates/chatcaseTemplates.js`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-server/routes/faq_kb.js`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.ts`
 - Inspect: `C:/Users/enzo/chatcase-design-studio/src/app/chatbot-design-studio`
 
 - [x] **Step 1: Search for channel-scope state**
 
 Run:
 ```powershell
-rg -n "targetChannel|selectedChannel|exclusiveChannel|isChannelExclusive|channelScope|Canal do fluxo|Canal exclusivo" C:\Users\enzo\tiledesk-server C:\Users\enzo\tiledesk-dashboard C:\Users\enzo\chatcase-design-studio
+rg -n "targetChannel|selectedChannel|exclusiveChannel|isChannelExclusive|channelScope|Canal do fluxo|Canal exclusivo" C:\Users\enzo\chatcase-tiledesk-server C:\Users\enzo\chatcase-tiledesk-dashboard C:\Users\enzo\chatcase-design-studio
 ```
 
 Expected: channel scope exists only in template import/detail compatibility and the dashboard embedded CDS header; Design Studio source should not force a channel badge.
@@ -32,7 +32,7 @@ Expected: channel scope exists only in template import/detail compatibility and 
 Run:
 ```powershell
 git -C C:\Users\enzo\chatcase-design-studio grep -n "createActionListByCategory" tiledesk-upstream/master -- src/app/chatbot-design-studio
-git -C C:\Users\enzo\tiledesk-dashboard grep -n "selectedChannel|channelCompatibility" tiledesk-upstream/master -- src/app/bots src/app/chatbot-design-studio src/app/services
+git -C C:\Users\enzo\chatcase-tiledesk-dashboard grep -n "selectedChannel|channelCompatibility" tiledesk-upstream/master -- src/app/bots src/app/chatbot-design-studio src/app/services
 ```
 
 Expected: upstream action palette is global by category and upstream has no project-wide flow channel marker.
@@ -40,9 +40,9 @@ Expected: upstream action palette is global by category and upstream has no proj
 ### Task 2: Remove Artificial Flow Channel Scope
 
 **Files:**
-- Modify: `C:/Users/enzo/tiledesk-server/pubmodules/chatbotTemplates/chatcaseTemplates.js`
-- Modify: `C:/Users/enzo/tiledesk-server/routes/faq_kb.js`
-- Test: `C:/Users/enzo/tiledesk-server/test/chatcaseTemplates.js`
+- Modify: `C:/Users/enzo/chatcase-tiledesk-server/pubmodules/chatbotTemplates/chatcaseTemplates.js`
+- Modify: `C:/Users/enzo/chatcase-tiledesk-server/routes/faq_kb.js`
+- Test: `C:/Users/enzo/chatcase-tiledesk-server/test/chatcaseTemplates.js`
 
 - [x] **Step 1: Write/extend tests for stale scope cleanup**
 
@@ -70,7 +70,7 @@ Expected: tests covering multichannel defaults pass.
 
 **Files:**
 - Inspect/modify only if needed: `C:/Users/enzo/chatcase-design-studio/src/app/chatbot-design-studio/cds-dashboard/cds-canvas/cds-panel-elements/cds-panel-elements.component.ts`
-- Inspect/modify only if needed: `C:/Users/enzo/tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.html`
+- Inspect/modify only if needed: `C:/Users/enzo/chatcase-tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.html`
 
 - [x] **Step 1: Verify no channel filtering in the action palette**
 
@@ -92,16 +92,16 @@ and make the text `Canal exclusivo`, not `Canal do fluxo`.
 ### Task 4: Validate Department/Instance Routing
 
 **Files:**
-- Inspect: `C:/Users/enzo/tiledesk-server/models/department.js`
-- Inspect: `C:/Users/enzo/tiledesk-server/services/departmentService.js`
-- Inspect: `C:/Users/enzo/tiledesk-server/pubmodules/casezap/connector.js`
-- Test: `C:/Users/enzo/tiledesk-server/test/departmentChannelBinding*.test.js`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-server/models/department.js`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-server/services/departmentService.js`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-server/pubmodules/casezap/connector.js`
+- Test: `C:/Users/enzo/chatcase-tiledesk-server/test/departmentChannelBinding*.test.js`
 
 - [x] **Step 1: Confirm department bindings are the channel/instance selector**
 
 Run:
 ```powershell
-rg -n "channel_bindings|getDepartmentByChannelBinding|skipDepartmentBot|id_bot" C:\Users\enzo\tiledesk-server
+rg -n "channel_bindings|getDepartmentByChannelBinding|skipDepartmentBot|id_bot" C:\Users\enzo\chatcase-tiledesk-server
 ```
 
 Expected: CaseZap incoming requests use `channel_bindings` to choose a department and that department's `id_bot`.

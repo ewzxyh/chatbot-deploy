@@ -13,16 +13,16 @@
 ### Task 1: Verify Existing Scope Rules
 
 **Files:**
-- Inspect: `C:/Users/enzo/tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.ts`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.ts`
 - Inspect: `C:/Users/enzo/chatcase-design-studio/src/app/chatbot-design-studio/utils-actions.ts`
-- Inspect: `C:/Users/enzo/tiledesk-server/pubmodules/tilebot/channelActionCompatibility.js`
+- Inspect: `C:/Users/enzo/chatcase-tiledesk-server/pubmodules/tilebot/channelActionCompatibility.js`
 
 - [ ] **Step 1: Confirm dashboard does not force a channel**
 
 Run:
 
 ```powershell
-Select-String -Path "C:/Users/enzo/tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.ts" -Pattern "exclusiveChannel|isChannelExclusive|selectedChannel = 'all'" -Context 2,2
+Select-String -Path "C:/Users/enzo/chatcase-tiledesk-dashboard/src/app/chatbot-design-studio/cds-dashboard/cds-dashboard.component.ts" -Pattern "exclusiveChannel|isChannelExclusive|selectedChannel = 'all'" -Context 2,2
 ```
 
 Expected: `selectedChannel` defaults to `all`, and channel badge only appears when `exclusiveChannel` or `isChannelExclusive` is true.
@@ -40,16 +40,16 @@ Expected: WABA-native actions expose `channelBadge` or are covered by backend fa
 ### Task 2: Verify Runtime Fallback With Tests
 
 **Files:**
-- Test: `C:/Users/enzo/tiledesk-server/test/tilebotChannelActionCompatibility.test.js`
-- Test: `C:/Users/enzo/tiledesk-server/test/chatcaseTemplates.js`
-- Source: `C:/Users/enzo/tiledesk-server/pubmodules/tilebot/channelActionCompatibility.js`
+- Test: `C:/Users/enzo/chatcase-tiledesk-server/test/tilebotChannelActionCompatibility.test.js`
+- Test: `C:/Users/enzo/chatcase-tiledesk-server/test/chatcaseTemplates.js`
+- Source: `C:/Users/enzo/chatcase-tiledesk-server/pubmodules/tilebot/channelActionCompatibility.js`
 
 - [ ] **Step 1: Run focused backend tests**
 
 Run:
 
 ```powershell
-cd C:/Users/enzo/tiledesk-server
+cd C:/Users/enzo/chatcase-tiledesk-server
 ./node_modules/.bin/mocha.cmd ./test/casezap/connector.test.js ./test/departmentChannelBinding.test.js ./test/chatcaseTemplates.js ./test/tilebotChannelActionCompatibility.test.js --exit
 ```
 
@@ -60,9 +60,9 @@ Expected: all tests pass, including CaseZap fallback and WABA-native preservatio
 Run:
 
 ```powershell
-git -C C:/Users/enzo/tiledesk-server diff --check
+git -C C:/Users/enzo/chatcase-tiledesk-server diff --check
 git -C C:/Users/enzo/chatcase-design-studio diff --check
-git -C C:/Users/enzo/tiledesk-dashboard diff --check
+git -C C:/Users/enzo/chatcase-tiledesk-dashboard diff --check
 ```
 
 Expected: no whitespace errors in touched files.
@@ -109,9 +109,9 @@ Expected: UI behavior matches the multichannel decision and no stale "Canal do f
 Run:
 
 ```powershell
-git -C C:/Users/enzo/tiledesk-server status --short --branch
+git -C C:/Users/enzo/chatcase-tiledesk-server status --short --branch
 git -C C:/Users/enzo/chatcase-design-studio status --short --branch
-git -C C:/Users/enzo/tiledesk-dashboard status --short --branch
+git -C C:/Users/enzo/chatcase-tiledesk-dashboard status --short --branch
 ```
 
 Expected: only intended files are staged or changed; unrelated files remain untouched.

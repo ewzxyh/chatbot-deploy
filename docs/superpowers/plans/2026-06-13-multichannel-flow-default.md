@@ -13,17 +13,17 @@
 ### Task 1: Verify Current Channel Scope Sources
 
 **Files:**
-- Inspect: `C:\Users\enzo\tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.ts`
-- Inspect: `C:\Users\enzo\tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.html`
+- Inspect: `C:\Users\enzo\chatcase-tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.ts`
+- Inspect: `C:\Users\enzo\chatcase-tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.html`
 - Inspect: `C:\Users\enzo\chatcase-design-studio\src\app\chatbot-design-studio`
-- Inspect: `C:\Users\enzo\tiledesk-server\pubmodules\chatbotTemplates\chatcaseTemplates.js`
+- Inspect: `C:\Users\enzo\chatcase-tiledesk-server\pubmodules\chatbotTemplates\chatcaseTemplates.js`
 
 - [x] **Step 1: Search for persisted channel scope**
 
 Run:
 
 ```powershell
-rg -n "targetChannel|selectedChannel|Canal do fluxo|Canal exclusivo|channelCompatibility" C:\Users\enzo\tiledesk-dashboard\src C:\Users\enzo\chatcase-design-studio\src C:\Users\enzo\tiledesk-server
+rg -n "targetChannel|selectedChannel|Canal do fluxo|Canal exclusivo|channelCompatibility" C:\Users\enzo\chatcase-tiledesk-dashboard\src C:\Users\enzo\chatcase-design-studio\src C:\Users\enzo\chatcase-tiledesk-server
 ```
 
 Expected: only template compatibility code and optional scoped-channel UI remain; no unconditional CaseZap default should exist.
@@ -41,8 +41,8 @@ Expected: if the string exists only in built bundles or stale source on VPS, reb
 ### Task 2: Keep Generic Templates Multichannel
 
 **Files:**
-- Modify if needed: `C:\Users\enzo\tiledesk-server\pubmodules\chatbotTemplates\chatcaseTemplates.js`
-- Test if present: `C:\Users\enzo\tiledesk-server\test\chatcaseTemplates*.js`
+- Modify if needed: `C:\Users\enzo\chatcase-tiledesk-server\pubmodules\chatbotTemplates\chatcaseTemplates.js`
+- Test if present: `C:\Users\enzo\chatcase-tiledesk-server\test\chatcaseTemplates*.js`
 
 - [x] **Step 1: Add/verify server test for default channel**
 
@@ -86,8 +86,8 @@ Expected: old bots/templates that only contain `targetChannel: "casezap"` still 
 ### Task 3: Remove Forced Channel Badge From Editor
 
 **Files:**
-- Modify if needed: `C:\Users\enzo\tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.ts`
-- Modify if needed: `C:\Users\enzo\tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.html`
+- Modify if needed: `C:\Users\enzo\chatcase-tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.ts`
+- Modify if needed: `C:\Users\enzo\chatcase-tiledesk-dashboard\src\app\chatbot-design-studio\cds-dashboard\cds-dashboard.component.html`
 - Modify if needed: `C:\Users\enzo\chatcase-design-studio\src\app\chatbot-design-studio`
 
 - [x] **Step 1: Make badge semantics explicit**
@@ -195,9 +195,9 @@ Expected:
 Run:
 
 ```powershell
-git -C C:\Users\enzo\tiledesk-dashboard diff --stat
+git -C C:\Users\enzo\chatcase-tiledesk-dashboard diff --stat
 git -C C:\Users\enzo\chatcase-design-studio diff --stat
-git -C C:\Users\enzo\tiledesk-server diff --stat
+git -C C:\Users\enzo\chatcase-tiledesk-server diff --stat
 git -C C:\Users\enzo\chatcase-tiledesk-deploy diff --stat
 ```
 
@@ -208,9 +208,9 @@ Expected: every changed file maps to this plan.
 Use scoped commits such as:
 
 ```powershell
-git -C C:\Users\enzo\tiledesk-dashboard add <files>
-git -C C:\Users\enzo\tiledesk-dashboard commit -m "fix: keep flow editor multichannel"
-git -C C:\Users\enzo\tiledesk-dashboard push
+git -C C:\Users\enzo\chatcase-tiledesk-dashboard add <files>
+git -C C:\Users\enzo\chatcase-tiledesk-dashboard commit -m "fix: keep flow editor multichannel"
+git -C C:\Users\enzo\chatcase-tiledesk-dashboard push
 ```
 
 Expected: no unrelated user changes are committed.

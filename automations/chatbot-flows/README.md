@@ -15,7 +15,7 @@ O fluxo preserva texto e numeros como fallback universal, mas tambem carrega `at
 
 ## Teste local
 
-O teste usa o motor real do Tybot instalado em `..\tiledesk-server` e uma fonte de dados em memoria:
+O teste usa o motor real do Tybot instalado em `..\chatcase-tiledesk-server` e uma fonte de dados em memoria:
 
 ```powershell
 node scripts\test-chatbot-flow-engine.js

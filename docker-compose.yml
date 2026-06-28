@@ -5,7 +5,7 @@ volumes:
   redis-data:
 services:
   dashboard:
-    build: ../tiledesk-dashboard
+    build: ../chatcase-tiledesk-dashboard
     #image: "tiledesk/tiledesk-dashboard:2.7.134-stage"
     container_name: chatcase-dashboard
     volumes:
@@ -59,12 +59,12 @@ services:
     container_name: chatcase-cds
     volumes:
       - ./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/assets/logos/logo-short.png:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/assets/logos/logo-short.png:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
@@ -137,14 +137,14 @@ services:
     container_name: chatcase-chat21-ionic
     volumes:
       - ./ionic-rebrand.sh:/docker-entrypoint.d/99-rebrand.sh:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/assets/icon/favicon.ico:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/img/logo.png:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/img/splash.png:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk-solo-logo.png:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
-      - ../tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/assets/icon/favicon.ico:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/img/logo.png:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/img/splash.png:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk-solo-logo.png:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
     ports:
       - "127.0.0.1:8082:80" # local direct access only; production should enter through proxy
     environment:
@@ -211,7 +211,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
   server:
-    build: ../tiledesk-server
+    build: ../chatcase-tiledesk-server
     #image: "tiledesk/tiledesk-server:2.13.23-op1"
     container_name: chatcase-server
     restart: always

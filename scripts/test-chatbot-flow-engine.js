@@ -6,7 +6,7 @@ const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
 const defaultFlowPath = path.join(rootDir, 'automations', 'chatbot-flows', 'whatsapp-menu-basic.json');
-const defaultServerDir = path.resolve(rootDir, '..', 'tiledesk-server');
+const defaultServerDir = path.resolve(rootDir, '..', 'chatcase-tiledesk-server');
 
 const flowPath = path.resolve(process.env.CHATBOT_FLOW_FILE || defaultFlowPath);
 const serverDir = path.resolve(process.env.TILEDESK_SERVER_DIR || defaultServerDir);
