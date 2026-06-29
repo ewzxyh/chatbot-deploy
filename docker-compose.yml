@@ -15,7 +15,7 @@ services:
       - >-
         FEATURES_TOKEN=PAY:T-ANA:T-ACT:T-TRI:T-GRO:T-DEP:T-OPH:T-MTL:T-CAR:T-PSA:F-MTT:T-SUP:T-LBS:T-APP:T-DEV:F-NOT:T-IPS:F-ETK:F-RAS:F-PPB:F-PET:F-MTS:F-TIL:T-DGF:T-NAT:T-HPB:F-TOW:F-KNB:T-GPT:T-BAN:F-AST:F-MON:T-CNT:F-AUT:F-WUN:F-INT:T-DPA:T-QIN:T
       - BOT_CREDENTIAL_URL=/api/modules/dialogflow/botcredendials/
-      - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-http://localhost:8081}/widget/"
+      - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-}/widget/"
       - SERVER_BASE_URL=/api/
       - CHAT_BASE_URL=/chat/?v=chatcase-20260524-locale2
       - CDS_BASE_URL=/cds/
@@ -69,7 +69,7 @@ services:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
         FEATURES_TOKEN=PAY:T-ANA:T-ACT:T-TRI:T-GRO:T-DEP:T-OPH:T-MTL:T-CAR:T-PSA:F-MTT:T-SUP:T-LBS:T-APP:T-DEV:F-NOT:T-IPS:F-ETK:F-RAS:F-PPB:F-PET:F-MTS:F-TIL:T-DGF:T-NAT:T-HPB:F-TOW:F-KNB:T-GPT:T-BAN:F-AST:F-MON:T-CNT:F-AUT:F-WUN:F-INT:T-DPA:T-QIN:T
-      - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-http://localhost:8081}/widget/"
+      - "WIDGET_LOCATION=${EXTERNAL_BASE_URL:-}/widget/"
       - SERVER_BASE_URL=/api/
       - DASHBOARD_URL=/dashboard/
       - WS_URL
@@ -102,7 +102,7 @@ services:
     restart: unless-stopped
   webwidget:
     build: ../chatcase-chat21-web-widget
-    # image: "chat21/chat21-web-widget:5.1.2"
+    image: "chat21/chat21-web-widget:5.1.2"
     container_name: chatcase-chat21-web-widget
     ports:
       - "127.0.0.1:4200:80"
@@ -113,7 +113,7 @@ services:
       - PUSH_ENGINE=none
       - LOG_LEVEL=info
       - "MQTT_ENDPOINT=${EXTERNAL_MQTT_BASE_URL:-}/mqws/ws"
-      - "MQTT_APIENDPOINT=${EXTERNAL_BASE_URL:-http://localhost:8081}/chatapi/api"
+      - "MQTT_APIENDPOINT=${EXTERNAL_BASE_URL:-}/chatapi/api"
       #- MQTT_LOGINSERVICE_ENDPOINT=/api/chat21/native/auth/createCustomToken
       - FIREBASE_APIKEY
       - FIREBASE_AUTHDOMAIN
@@ -123,9 +123,9 @@ services:
       - FIREBASE_MESSAGINGSENDERID
       - FIREBASE_TENANT=tilechat
       - UPLOAD_ENGINE=native
-      - "SERVER_BASE_URL=${EXTERNAL_BASE_URL:-http://localhost:8081}/api/"
-      - "TRANSLATIONS_URL=${EXTERNAL_BASE_URL:-http://localhost:8081}/api/"
-      - "API_BASEIMAGE_URL=${EXTERNAL_BASE_URL:-http://localhost:8081}/api/"
+      - "SERVER_BASE_URL=${EXTERNAL_BASE_URL:-}/api/"
+      - "TRANSLATIONS_URL=${EXTERNAL_BASE_URL:-}/api/"
+      - "API_BASEIMAGE_URL=${EXTERNAL_BASE_URL:-}/api/"
       - DASHBOARD_URL=/dashboard/
       - AUTH_PERSISTENCE=LOCAL
       - ENBED_JS=true
