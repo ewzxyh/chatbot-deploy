@@ -11,7 +11,7 @@ const pages = [
   {
     route: '/data-deletion',
     file: path.join(root, 'public', 'legal', 'data-deletion', 'index.html'),
-    title: 'Instrucoes para exclusao de dados'
+    title: 'Instruções para exclusão de dados'
   }
 ];
 
