@@ -208,6 +208,8 @@ function testProxySecurityHeadersAndRateLimit() {
   assert.match(proxy, /add_header\s+Permissions-Policy\s+/);
   assert.match(proxy, /add_header\s+Strict-Transport-Security\s+\$chatcase_hsts_header\s+always;/);
   assert.match(proxy, /add_header\s+Content-Security-Policy\s+\$chatcase_app_csp\s+always;/);
+  assert.match(proxy, /script-src[^;"]*https:\/\/client\.sleekplan\.com/);
+  assert.match(proxy, /frame-src[^;"]*https:\/\/sleekplan\.com[^;"]*https:\/\/\*\.sleekplan\.com/);
   assert.match(proxy, /add_header\s+X-Frame-Options\s+"SAMEORIGIN"\s+always;/);
 
   const api = extractBlock(proxy, 'location /api/');
