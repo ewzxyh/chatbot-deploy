@@ -210,6 +210,9 @@ function testProxySecurityHeadersAndRateLimit() {
   assert.match(proxy, /add_header\s+Content-Security-Policy\s+\$chatcase_app_csp\s+always;/);
   assert.match(proxy, /script-src[^;"]*https:\/\/client\.sleekplan\.com/);
   assert.match(proxy, /script-src[^;"]*https:\/\/api-client\.sleekplan\.com/);
+  assert.match(proxy, /script-src[^;"]*https:\/\/storage\.sleekplan\.com/);
+  assert.match(proxy, /style-src[^;"]*https:\/\/client\.sleekplan\.com/);
+  assert.match(proxy, /font-src[^;"]*https:\/\/client\.sleekplan\.com[^;"]*https:\/\/storage\.sleekplan\.com/);
   assert.match(proxy, /frame-src[^;"]*https:\/\/sleekplan\.com[^;"]*https:\/\/\*\.sleekplan\.com/);
   assert.match(proxy, /add_header\s+X-Frame-Options\s+"SAMEORIGIN"\s+always;/);
 
