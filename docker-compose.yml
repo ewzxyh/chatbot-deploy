@@ -128,6 +128,7 @@ services:
       - FIREBASE_TENANT=tilechat
       - UPLOAD_ENGINE=native
       - "SERVER_BASE_URL=${EXTERNAL_BASE_URL:-}/api/"
+      - "API_URL=${EXTERNAL_BASE_URL:-}/api/"
       - "TRANSLATIONS_URL=${EXTERNAL_BASE_URL:-}/api/"
       - "API_BASEIMAGE_URL=${EXTERNAL_BASE_URL:-}/api/"
       - DASHBOARD_URL=/dashboard/
