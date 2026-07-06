@@ -28,7 +28,7 @@ patch_static_text() {
       -e 's#Tiledesk#ChatCase#g' \
       -e 's#redacted@example.invalid#redacted@example.invalid#g' \
       -e 's#redacted@example.invalid#redacted@example.invalid#g' \
-      -e 's#https://tiledesk.com/wp-content/uploads/2022/12/6029654-02-min.png#/assets/logos/tiledesk_logo.svg#g' \
+      -e 's#https://tiledesk.com/wp-content/uploads/2022/12/6029654-02-min.png#/assets/logos/chatcase_logo.svg#g' \
       -e 's#[REDACTED_BASIC_AUTH_URL]' \
       -e 's#https://feedback.tiledesk.com/changelog#https://chatcase.com.br/#g' \
       -e 's#https://feedback.tiledesk.com/roadmap#https://chatcase.com.br/#g' \
@@ -43,7 +43,7 @@ patch_static_text() {
       -e 's#https://gethelp.tuiledesk.com#https://chatcase.com.br#g' \
       -e 's#https://chatcase.com.br/articles/how-to-perform-a-whatsapp-broadcast-using-tiledesk/[^"'\''<)]*#https://chatcase.com.br/#g' \
       -e 's#using-tiledesk#using-chatcase#g' \
-      -e 's#https://support-pre.tiledesk.com/dashboard/assets/img/logos/tiledesk-logo_new_gray.svg#/assets/logos/tiledesk_logo.svg#g' \
+      -e 's#https://support-pre.tiledesk.com/dashboard/assets/img/logos/tiledesk-logo_new_gray.svg#/assets/logos/chatcase_logo.svg#g' \
       -e 's#feedback.ChatCase.com#chatcase.com.br#g' \
       -e 's#gethelp.ChatCase.com#chatcase.com.br#g' \
       -e 's#developer.ChatCase.com#chatcase.com.br#g' \

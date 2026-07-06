@@ -65,10 +65,10 @@ services:
       - ./cds-rebrand.sh:/docker-entrypoint.d/99-cds-rebrand.sh:ro
       - ../chatcase-tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
       - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/assets/logos/logo-short.png:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/chatcase_logo.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/chatcase_logo_no_text.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/chatcase-logo_new_white.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/chatcase_logo_white_small.svg:ro
     environment:
       - "TZ=${TZ:-America/Sao_Paulo}"
       - >-
@@ -145,11 +145,11 @@ services:
       - ../chatcase-tiledesk-dashboard/src/assets/img/logos/favicon.ico:/usr/share/nginx/html/assets/icon/favicon.ico:ro
       - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/img/logo.png:ro
       - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon-white.png:/usr/share/nginx/html/img/splash.png:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo.svg:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_no_text.svg:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/tiledesk-solo-logo.png:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk-logo_new_white.svg:ro
-      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/tiledesk_logo_white_small.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo.svg:/usr/share/nginx/html/assets/logos/chatcase_logo.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/chatcase_logo_no_text.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-icon.svg:/usr/share/nginx/html/assets/logos/chatcase-solo-logo.png:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/chatcase-logo_new_white.svg:ro
+      - ../chatcase-tiledesk-dashboard/src/assets/img/logos/chatcase-logo-white.svg:/usr/share/nginx/html/assets/logos/chatcase_logo_white_small.svg:ro
     ports:
       - "127.0.0.1:8082:80" # local direct access only; production should enter through proxy
     environment:
