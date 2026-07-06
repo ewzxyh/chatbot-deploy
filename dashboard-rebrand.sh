@@ -3,6 +3,20 @@ set -eu
 
 ROOT="/usr/share/nginx/html"
 
+copy_asset() {
+  source="$ROOT/assets/img/$1"
+  target="$ROOT/assets/img/$2"
+
+  if [ -f "$source" ] && [ ! -f "$target" ]; then
+    cp "$source" "$target"
+  fi
+}
+
+copy_asset "avatar_bot_tiledesk.svg" "avatar_bot_chatcase.svg"
+copy_asset "avatar_bot_tiledesk_old.svg" "avatar_bot_chatcase_old.svg"
+copy_asset "avatar_bot_tiledesk_white.svg" "avatar_bot_chatcase_white.svg"
+copy_asset "avatar_flow_tiledesk.svg" "avatar_flow_chatcase.svg"
+
 find "$ROOT" -type f \( -name '*.html' -o -name '*.js' -o -name '*.json' -o -name '*.css' \) -print | while read -r file; do
   sed -i \
     -e 's#Tiledesk#ChatCase#g' \
