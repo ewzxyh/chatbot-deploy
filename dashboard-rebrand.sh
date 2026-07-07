@@ -3,6 +3,10 @@ set -eu
 
 ROOT="/usr/share/nginx/html"
 
+if command -v envsubst >/dev/null 2>&1 && [ -f "$ROOT/dashboard-config-template.json" ]; then
+  envsubst < "$ROOT/dashboard-config-template.json" > "$ROOT/dashboard-config.json"
+fi
+
 copy_asset() {
   source="$ROOT/assets/img/$1"
   target="$ROOT/assets/img/$2"
