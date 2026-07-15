@@ -231,6 +231,7 @@ services:
       - CHAT21_APPID=tilechat
       - RESTHOOK_ENABLED=true
       - ALLOW_REOPEN_CHAT=true
+      - "ACTIVITY_HISTORY_ENABLED=${ACTIVITY_HISTORY_ENABLED:-true}"
       - >-
         CHAT21_ADMIN_TOKEN=${CHAT21_ADMIN_TOKEN:-[REDACTED_JWT]}
       - >-
