@@ -160,12 +160,21 @@ function validate(config) {
     );
   }
 
-  if (runtime.chat21HttpRabbitUri !== runtime.chat21ServerRabbitUri) {
+  if (env.RABBITMQ_ADMIN_URI && runtime.chat21HttpRabbitUri !== env.RABBITMQ_ADMIN_URI) {
     addMismatch(
       errors,
-      'chat21httpserver RABBITMQ_URI must match chat21server RABBITMQ_URI',
+      'chat21httpserver RABBITMQ_URI must match env file RABBITMQ_ADMIN_URI',
       runtime.chat21HttpRabbitUri,
-      runtime.chat21ServerRabbitUri
+      env.RABBITMQ_ADMIN_URI
+    );
+  }
+
+  if (env.RABBITMQ_URI && runtime.chat21ServerRabbitUri !== env.RABBITMQ_URI) {
+    addMismatch(
+      errors,
+      'chat21server RABBITMQ_URI must match env file RABBITMQ_URI',
+      runtime.chat21ServerRabbitUri,
+      env.RABBITMQ_URI
     );
   }
 
@@ -187,7 +196,8 @@ function main() {
     console.log('OK chat21 runtime env');
     console.log(`- server CHAT21_JWT_SECRET: ${safeDescribe(runtime.serverChat21JwtSecret)}`);
     console.log(`- chat21httpserver JWT_KEY: ${safeDescribe(runtime.chat21HttpJwtKey)}`);
-    console.log(`- chat21 RABBITMQ_URI: ${safeDescribe(runtime.chat21HttpRabbitUri)}`);
+    console.log(`- chat21httpserver RABBITMQ_URI: ${safeDescribe(runtime.chat21HttpRabbitUri)}`);
+    console.log(`- chat21server RABBITMQ_URI: ${safeDescribe(runtime.chat21ServerRabbitUri)}`);
   } catch (error) {
     console.error('FAIL chat21 runtime env');
     console.error(`- ${error.message}`);

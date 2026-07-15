@@ -41,13 +41,16 @@ process.stdout.write((values[service] && values[service][key]) || '');
   };
 }
 
-function makeEnvFile(chat21Secret) {
-  return writeTempFile('runtime.env', `CHAT21_JWT_SECRET=${chat21Secret}\n`);
+function makeEnvFile(chat21Secret, rabbitmqAdminUri, rabbitmqUri) {
+  return writeTempFile(
+    'runtime.env',
+    `CHAT21_JWT_SECRET=${chat21Secret}\nRABBITMQ_ADMIN_URI=${rabbitmqAdminUri}\nRABBITMQ_URI=${rabbitmqUri}\n`
+  );
 }
 
-function runChecker(values, envSecret) {
+function runChecker(values, envSecret, rabbitmqAdminUri, rabbitmqUri) {
   const fakeDocker = makeFakeDocker(values);
-  const envFile = makeEnvFile(envSecret);
+  const envFile = makeEnvFile(envSecret, rabbitmqAdminUri, rabbitmqUri);
   try {
     return spawnSync(process.execPath, [
       checker,
@@ -66,17 +69,20 @@ function runChecker(values, envSecret) {
   }
 }
 
+const rabbitmqAdminUri = '[REDACTED_CREDENTIAL_URL]';
+const rabbitmqUri = '[REDACTED_CREDENTIAL_URL]';
+
 function testFailsWithoutLeakingSecretWhenJwtDiffers() {
   const result = runChecker({
     server: { CHAT21_JWT_SECRET: 'REDACTED_SECRET' },
     chat21httpserver: {
       JWT_KEY: 'wrong-secret-value-1234567890',
-      RABBITMQ_URI: '[REDACTED_CREDENTIAL_URL]',
+      RABBITMQ_URI: rabbitmqAdminUri,
     },
     chat21server: {
-      RABBITMQ_URI: '[REDACTED_CREDENTIAL_URL]',
+      RABBITMQ_URI: rabbitmqUri,
     },
-  }, 'server-secret-value-1234567890');
+  }, 'server-secret-value-1234567890', rabbitmqAdminUri, rabbitmqUri);
 
   const output = `${result.stdout}\n${result.stderr}`;
   assert.notStrictEqual(result.status, 0);
@@ -85,23 +91,42 @@ function testFailsWithoutLeakingSecretWhenJwtDiffers() {
   assert.doesNotMatch(output, /server-secret-value-1234567890|wrong-secret-value-1234567890/);
 }
 
-function testPassesWhenRuntimeValuesMatch() {
+function testPassesWithLeastPrivilegeRabbitMqCredentials() {
   const result = runChecker({
     server: { CHAT21_JWT_SECRET: 'REDACTED_SECRET' },
     chat21httpserver: {
       JWT_KEY: 'shared-secret-value-1234567890',
-      RABBITMQ_URI: '[REDACTED_CREDENTIAL_URL]',
+      RABBITMQ_URI: rabbitmqAdminUri,
     },
     chat21server: {
-      RABBITMQ_URI: '[REDACTED_CREDENTIAL_URL]',
+      RABBITMQ_URI: rabbitmqUri,
     },
-  }, 'shared-secret-value-1234567890');
+  }, 'shared-secret-value-1234567890', rabbitmqAdminUri, rabbitmqUri);
 
   const output = `${result.stdout}\n${result.stderr}`;
   assert.strictEqual(result.status, 0, output);
   assert.match(result.stdout, /OK chat21 runtime env/);
 }
 
+function testFailsWhenRuntimeRabbitMqCredentialDoesNotMatchItsRole() {
+  const result = runChecker({
+    server: { CHAT21_JWT_SECRET: 'REDACTED_SECRET' },
+    chat21httpserver: {
+      JWT_KEY: 'shared-secret-value-1234567890',
+      RABBITMQ_URI: rabbitmqUri,
+    },
+    chat21server: {
+      RABBITMQ_URI: rabbitmqUri,
+    },
+  }, 'shared-secret-value-1234567890', rabbitmqAdminUri, rabbitmqUri);
+
+  const output = `${result.stdout}\n${result.stderr}`;
+  assert.notStrictEqual(result.status, 0);
+  assert.match(output, /chat21httpserver RABBITMQ_URI must match env file RABBITMQ_ADMIN_URI/);
+  assert.doesNotMatch(output, /admin-token|observer-token/);
+}
+
 testFailsWithoutLeakingSecretWhenJwtDiffers();
-testPassesWhenRuntimeValuesMatch();
+testPassesWithLeastPrivilegeRabbitMqCredentials();
+testFailsWhenRuntimeRabbitMqCredentialDoesNotMatchItsRole();
 console.log('OK test-chat21-runtime-env');

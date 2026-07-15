@@ -189,7 +189,9 @@ async function checkCommunity(ctx) {
   const assetMissing = [];
   if (!assetResponse.text.includes('/api/modules/templates/public/templates')) assetMissing.push('templates api');
   if (!assetResponse.text.includes('/api/modules/templates/public/community')) assetMissing.push('community api');
-  if (!assetResponse.text.includes('install=1&source=community')) assetMissing.push('install intent');
+  const hasInstallIntent = assetResponse.text.includes("params.set('install', '1')")
+    && assetResponse.text.includes("params.set('source', 'community')");
+  if (!hasInstallIntent) assetMissing.push('install intent');
   if (assetMissing.length) {
     return result('fail', 'community asset', `missing expected markers: ${assetMissing.join(', ')}`, {
       path: '/community/assets/community.js',
