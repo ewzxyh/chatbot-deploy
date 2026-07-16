@@ -87,7 +87,7 @@ function baseProductionEnv(overrides = {}) {
     OPERATIONAL_MONITOR_START_DELAY_SECONDS: '60',
     OPERATIONAL_ALERT_MIN_SEVERITY: 'critical',
     OPERATIONAL_ALERT_WEBHOOK_URL: 'https://app.chatcase.com.br/automation/webhooks/chatcase/operational-alert?secret=REDACTED_SECRET',
-    OPERATIONAL_ALERT_WEBHOOK_EVENTS: 'alert.opened,alert.reopened,alert.still_open',
+    OPERATIONAL_ALERT_WEBHOOK_EVENTS: 'alert.opened,alert.reopened',
     OPERATIONAL_ALERT_WEBHOOK_TIMEOUT_MS: '5000',
     OPERATIONAL_ALERT_NOTIFY_RESOLVED: 'false',
     OPERATIONAL_ALERT_EMAIL_ENABLED: 'false',

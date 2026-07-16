@@ -118,6 +118,7 @@ function shouldNotify(incident, options = {}) {
   if (!incident) return false;
   const minSeverity = normalizeSeverity(options.minSeverity || process.env.INCIDENT_MIN_SEVERITY || 'critical');
   if (incident.status === 'resolved' && options.notifyResolved !== true) return false;
+  if (incident.source === 'chatcase' && incident.eventName === 'alert.still_open' && options.notifyStillOpen !== true) return false;
   return severityRank(incident.severity) >= severityRank(minSeverity);
 }
 

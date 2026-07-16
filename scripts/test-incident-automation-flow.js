@@ -62,6 +62,17 @@ async function main() {
     assert.strictEqual(chatcase.json.incident.severity, 'critical');
     assert(!chatcase.json.incident.message.includes('secret123'));
 
+    const stillOpenPayload = fixture('chatcase-operational-alert.json');
+    stillOpenPayload.event = 'alert.still_open';
+    const stillOpen = await postJson(
+      `${baseUrl}/webhooks/chatcase/operational-alert`,
+      stillOpenPayload,
+      secret,
+    );
+    assert.strictEqual(stillOpen.status, 200);
+    assert.strictEqual(stillOpen.json.notify, false);
+    assert.strictEqual(stillOpen.json.delivery.reason, 'below_threshold');
+
     const sentry = await postJson(
       `${baseUrl}/webhooks/sentry/issue-alert`,
       fixture('sentry-issue-alert.json'),
