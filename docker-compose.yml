@@ -475,7 +475,7 @@ services:
       # - 'REDIS_URL=redis://host.docker.internal:6379'
       - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
       - TILELLM_ROLE=train
-      - WORKERS=3
+      - WORKERS=1
       # WORKER_CONFIGURATION
       - "MONGODB_URL=${TILEDESK_MONGODB_URI:-mongodb://mongo/tiledesk}"
       - >-
@@ -506,7 +506,7 @@ services:
       # - 'REDIS_URL=redis://host.docker.internal:6379'
       - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
       - TILELLM_ROLE=qa
-      - WORKERS=3
+      - WORKERS=1
       # WORKER_CONFIGURATION
       - "MONGODB_URL=${TILEDESK_MONGODB_URI:-mongodb://mongo/tiledesk}"
       - >-
