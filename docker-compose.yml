@@ -476,6 +476,7 @@ services:
       - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
       - TILELLM_ROLE=train
       - WORKERS=1
+      - ENABLE_COMPLIANCE=false
       # WORKER_CONFIGURATION
       - "MONGODB_URL=${TILEDESK_MONGODB_URI:-mongodb://mongo/tiledesk}"
       - >-
@@ -507,6 +508,7 @@ services:
       - "REDIS_URL=${REDIS_URL:-redis://redis:6379}"
       - TILELLM_ROLE=qa
       - WORKERS=1
+      - ENABLE_COMPLIANCE=false
       # WORKER_CONFIGURATION
       - "MONGODB_URL=${TILEDESK_MONGODB_URI:-mongodb://mongo/tiledesk}"
       - >-
