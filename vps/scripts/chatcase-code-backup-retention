@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+BACKUP_DIR="${BACKUP_DIR:-/opt/chatcase-dev/backups}"
+RETENTION_DAYS="${RETENTION_DAYS:-30}"
+DRY_RUN=false
+
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=true
+elif [[ -n "${1:-}" ]]; then
+  echo "Usage: $0 [--dry-run]" >&2
+  exit 2
+fi
+
+[[ "$RETENTION_DAYS" =~ ^[0-9]+$ ]] || {
+  echo "RETENTION_DAYS must be a non-negative integer" >&2
+  exit 2
+}
+
+[[ -d "$BACKUP_DIR" ]] || exit 0
+cutoff_epoch="$(date -d "$RETENTION_DAYS days ago" +%s)"
+
+for prefix in dashboard-before- server-before- chatbot-before-; do
+  mapfile -d '' backups < <(
+    find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 \
+      \( -type f -o -type d \) -name "${prefix}*" -print0
+  )
+  ((${#backups[@]})) || continue
+
+  latest="${backups[0]}"
+  for backup in "${backups[@]}"; do
+    [[ "$backup" -nt "$latest" ]] && latest="$backup"
+  done
+
+  for backup in "${backups[@]}"; do
+    [[ "$backup" == "$latest" ]] && continue
+    (( $(stat -c %Y -- "$backup") < cutoff_epoch )) || continue
+
+    if $DRY_RUN; then
+      echo "WOULD_DELETE $backup"
+    else
+      rm -rf -- "$backup"
+      if command -v logger >/dev/null; then
+        logger -t chatcase-code-backup-retention "deleted $backup"
+      fi
+    fi
+  done
+done
