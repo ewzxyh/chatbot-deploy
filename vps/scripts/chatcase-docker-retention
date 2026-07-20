@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+DOCKER_BIN="${DOCKER_BIN:-docker}"
+IMAGE_RETENTION_DAYS="${IMAGE_RETENTION_DAYS:-30}"
+DRY_RUN=false
+
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=true
+elif [[ -n "${1:-}" ]]; then
+  echo "Usage: $0 [--dry-run]" >&2
+  exit 2
+fi
+
+[[ "$IMAGE_RETENTION_DAYS" =~ ^[0-9]+$ ]] || {
+  echo "IMAGE_RETENTION_DAYS must be a non-negative integer" >&2
+  exit 2
+}
+
+if $DRY_RUN; then
+  echo "WOULD_PRUNE build-cache older-than=14d"
+  echo "WOULD_PRUNE dangling-images older-than=7d"
+else
+  "$DOCKER_BIN" builder prune -f --filter until=336h
+  "$DOCKER_BIN" image prune -f --filter until=168h
+fi
+
+declare -A active_ids=() latest_epoch=()
+mapfile -t container_ids < <("$DOCKER_BIN" ps -aq)
+if ((${#container_ids[@]})); then
+  while IFS= read -r image_id; do
+    [[ -n "$image_id" ]] && active_ids["$image_id"]=1
+  done < <("$DOCKER_BIN" inspect --format '{{.Image}}' "${container_ids[@]}")
+fi
+
+refs=()
+repos=()
+image_ids=()
+created_epochs=()
+while IFS='|' read -r repository tag image_id; do
+  case "$repository:$tag" in
+    chatcase-rollback/*:*|chatcase-*:pre-*) ;;
+    *) continue ;;
+  esac
+
+  ref="$repository:$tag"
+  created_at="$("$DOCKER_BIN" image inspect --format '{{.Created}}' "$ref")"
+  created_epoch="$(date -d "$created_at" +%s)"
+  refs+=("$ref")
+  repos+=("$repository")
+  image_ids+=("$image_id")
+  created_epochs+=("$created_epoch")
+  if [[ -z "${latest_epoch[$repository]:-}" ]] || ((created_epoch > latest_epoch[$repository])); then
+    latest_epoch[$repository]="$created_epoch"
+  fi
+done < <("$DOCKER_BIN" image ls --no-trunc --format '{{.Repository}}|{{.Tag}}|{{.ID}}')
+
+cutoff_epoch="$(date -d "$IMAGE_RETENTION_DAYS days ago" +%s)"
+for index in "${!refs[@]}"; do
+  ((created_epochs[index] < cutoff_epoch)) || continue
+  ((created_epochs[index] < latest_epoch[${repos[index]}])) || continue
+  [[ -z "${active_ids[${image_ids[index]}]:-}" ]] || continue
+
+  if $DRY_RUN; then
+    echo "WOULD_DELETE ${refs[index]}"
+  else
+    "$DOCKER_BIN" image rm "${refs[index]}"
+    command -v logger >/dev/null && logger -t chatcase-docker-retention "deleted ${refs[index]}"
+  fi
+done
