@@ -200,6 +200,9 @@ function runChecker(env) {
 function testProxySecurityHeadersAndRateLimit() {
   const proxy = read('proxy-nginx.conf');
 
+  assert.match(proxy, /set_real_ip_from\s+172\.18\.0\.1;/);
+  assert.match(proxy, /real_ip_header\s+X-Forwarded-For;/);
+  assert.match(proxy, /real_ip_recursive\s+on;/);
   assert.match(proxy, /limit_req_status\s+429;/);
   assert.match(proxy, /limit_req_zone\s+\$binary_remote_addr\s+zone=chatcase_api_per_ip:10m\s+rate=10r\/s;/);
   assert.match(proxy, /limit_req_zone\s+\$binary_remote_addr\s+zone=chatcase_chatapi_per_ip:10m\s+rate=20r\/s;/);
