@@ -206,6 +206,7 @@ function testProxySecurityHeadersAndRateLimit() {
   assert.match(proxy, /limit_req_status\s+429;/);
   assert.match(proxy, /limit_req_zone\s+\$binary_remote_addr\s+zone=chatcase_api_per_ip:10m\s+rate=10r\/s;/);
   assert.match(proxy, /limit_req_zone\s+\$binary_remote_addr\s+zone=chatcase_chatapi_per_ip:10m\s+rate=20r\/s;/);
+  assert.match(proxy, /limit_req_zone\s+\$binary_remote_addr\s+zone=chatcase_media_per_ip:10m\s+rate=30r\/s;/);
   assert.match(proxy, /add_header\s+X-Content-Type-Options\s+"nosniff"\s+always;/);
   assert.match(proxy, /add_header\s+Referrer-Policy\s+"strict-origin-when-cross-origin"\s+always;/);
   assert.match(proxy, /add_header\s+Permissions-Policy\s+/);
@@ -220,9 +221,11 @@ function testProxySecurityHeadersAndRateLimit() {
   assert.match(proxy, /add_header\s+X-Frame-Options\s+"SAMEORIGIN"\s+always;/);
 
   const api = extractBlock(proxy, 'location /api/');
+  const media = extractBlock(proxy, 'location = /api/files');
   const chatapi = extractBlock(proxy, 'location /chatapi/');
   const widget = extractBlock(proxy, 'location /widget/');
   assert.match(api, /limit_req\s+zone=chatcase_api_per_ip\s+burst=40\s+nodelay;/);
+  assert.match(media, /limit_req\s+zone=chatcase_media_per_ip\s+burst=120\s+nodelay;/);
   assert.match(chatapi, /limit_req\s+zone=chatcase_chatapi_per_ip\s+burst=80\s+nodelay;/);
   assert.doesNotMatch(widget, /X-Frame-Options|frame-ancestors/);
 }
