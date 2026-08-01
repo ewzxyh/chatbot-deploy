@@ -2,3 +2,4 @@
 *.service text eol=lf
 *.timer text eol=lf
 vps/env/*.env.example text eol=lf
+public/community/assets/casezap/*.pdf binary
