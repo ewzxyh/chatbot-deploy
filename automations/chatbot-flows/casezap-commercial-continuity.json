@@ -1002,12 +1002,12 @@
       "intent_id": "cc-commercial-handoff-online",
       "intent_display_name": "handoff_online",
       "language": "pt",
-      "answer": "Certo, vou chamar alguém da equipe agora. Pode deixar os detalhes por aqui.",
+      "answer": "Vou chamar alguém da equipe agora. Pode deixar os detalhes por aqui.",
       "actions": [
         {
           "_tdActionType": "reply",
           "_tdActionId": "cc-commercial-handoff-online-reply",
-          "text": "Certo, vou chamar alguém da equipe agora. Pode deixar os detalhes por aqui.",
+          "text": "Vou chamar alguém da equipe agora. Pode deixar os detalhes por aqui.",
           "attributes": {
             "disableInputMessage": false,
             "commands": [
@@ -1019,7 +1019,7 @@
                 "type": "message",
                 "message": {
                   "type": "text",
-                  "text": "Certo, vou chamar alguém da equipe agora. Pode deixar os detalhes por aqui."
+                  "text": "Vou chamar alguém da equipe agora. Pode deixar os detalhes por aqui."
                 }
               }
             ]
